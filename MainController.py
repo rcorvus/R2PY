@@ -16,6 +16,10 @@
 # to output sound to the HDMI audio
 # sudo amixer cset numid=3 2
 
+# Control with Xbox controller:
+# Use left stick for controlling driving around
+# Use right stick for looking around (i.e. turning his dome left and right)
+
 # import modules
 import sys
 # import motorControl
@@ -23,42 +27,51 @@ import RPi.GPIO as GPIO
 import math
 import XboxController
 import time
-import pygame.mixer
-
+import pygame
+from pygame import mixer
 
 class MainController:
-    sabertoothS1 = 0
-    sabertoothS2 = 0
-    syren10 = 0
 
     def __init__(self):
-        global sabertoothS1
-        global sabertoothS2
-        global syren10
+        self.sabertoothS1 = 0
+        self.sabertoothS2 = 0
+        self.syren10 = 0
+        self.gpioPin_SabertoothS1 = 3
+        self.gpioPin_SabertoothS2 = 5
+        self.gpioPin_Syren10 = 7
+        self.gpioPin_2_leg_mode = 9
+        self.gpioPin_3_leg_mode = 11
+
         # setup gpio
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(3, GPIO.OUT)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.gpioPin_SabertoothS1, GPIO.OUT)
         # channel=3 frequency=50Hz
-        sabertoothS1 = GPIO.PWM(3, 50)
-        sabertoothS1.start(7.5)
+        self.sabertoothS1 = GPIO.PWM(self.gpioPin_SabertoothS1, 50)
+        self.sabertoothS1.start(7.5)
 
-        GPIO.setup(5, GPIO.OUT)
+        GPIO.setup(self.gpioPin_SabertoothS2, GPIO.OUT)
         # channel=5 frequency=50Hz
-        sabertoothS2 = GPIO.PWM(5, 50)
-        sabertoothS2.start(7.5)
+        self.sabertoothS2 = GPIO.PWM(self.gpioPin_SabertoothS2, 50)
+        self.sabertoothS2.start(7.5)
 
-        GPIO.setup(7, GPIO.OUT)
+        GPIO.setup(self.gpioPin_Syren10, GPIO.OUT)
         # channel=7 frequency=50Hz
-        syren10 = GPIO.PWM(7, 50)
-        syren10.start(7.5)
+        self.syren10 = GPIO.PWM(self.gpioPin_Syren10, 50)
+        self.syren10.start(7.5)
+
+        GPIO.setup(self.gpioPin_2_leg_mode, GPIO.OUT)
+        GPIO.setup(self.gpioPin_3_leg_mode, GPIO.OUT)
 
         # setup controller values
         self.xValueLeft = 0
         self.yValueLeft = 0
         self.xValueRight = 0
         self.yValueRight = 0
+        self.dpadValue = (0,0)
+        self.lbValue = 0
 
         pygame.mixer.pre_init()
+
         self.xboxCont = XboxController.XboxController(deadzone=0.2,
                                                       scale=1,
                                                       invertYAxis=True)
@@ -68,21 +81,27 @@ class MainController:
         self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.LTHUMBY, self.leftThumbY)
         self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.RTHUMBX, self.rightThumbX)
         self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.RTHUMBY, self.rightThumbY)
+        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.DPAD, self.dpadButton)
         self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.BACK, self.backButton)
         self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.A, self.aButton)
+        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.LB, self.lbButton)
 
         # start the controller
         self.xboxCont.start()
-        pygame.mixer.init()
+
         # load all the sounds
-        # TODO: enum the names for ordinal
-        pygame.mixer.music.load("./sounds/8ANNOYED.mp3")
+        pygame.mixer.init()
+        soundRepository = "./sounds/"
+
+        soundAnnoyedFile = "8ANNOYED.mp3"
+        self.soundAnnoyed = mixer.Sound(soundRepository + soundAnnoyedFile)
+
         self.running = True
 
     def steering(self, x, y):
         # assumes the initial (x,y) coordinates are in the -1.0/+1.0 range
-        print "x = {}".format(x)
-        print "y = {}".format(y)
+        print("x = {}".format(x))
+        print("y = {}".format(y))
 
         # convert to polar
         r = math.hypot(x, y)
@@ -103,15 +122,15 @@ class MainController:
         left = max(-1, min(left, 1))
         right = max(-1, min(right, 1))
 
-        print "left = {}".format(left)
-        print "right = {}".format(right)
+        print("left = {}".format(left))
+        print("right = {}".format(right))
 
         # rotate 90 degrees counterclockwise back
         returnLeft = right * -1
         returnRight = left
 
-        print "returnLeft = {}".format(returnLeft)
-        print "returnRight = {}".format(returnRight)
+        print("returnLeft = {}".format(returnLeft))
+        print("returnRight = {}".format(returnRight))
 
         return returnLeft, returnRight
 
@@ -126,7 +145,7 @@ class MainController:
         # convert the 0-1 range into a value in the right range.
         return rightMin + (valueScaled * rightSpan)
 
-    # call back funtions for left thumb stick
+    # call back functions for left thumb stick
     def leftThumbX(self, xValue):
         self.xValueLeft = xValue
         self.updateFeet()
@@ -135,7 +154,7 @@ class MainController:
         self.yValueLeft = yValue
         self.updateFeet()
 
-    # call back funtions for right thumb stick
+    # call back functions for right thumb stick
     def rightThumbX(self, xValue):
         self.xValueRight = xValue
         self.updateDome()
@@ -144,29 +163,52 @@ class MainController:
         self.yValueRight = yValue
         self.updateDome()
 
+    def dpadButton(self, value):
+        print("dpadButton = {}".format(value))
+        self.dpadValue = value
+        self.transitionLegs()
+
+    def lbButton(self, value):
+        print("lbButton = {}".format(value))
+        self.lbValue = value
+
     def backButton(self, value):
+        print("backButton = {}".format(value))
         self.stop()
 
     def aButton(self, value):
+        print("aButton = {}".format(value))
         if value == 1:
-            pygame.mixer.music.play(0)
-            print "sound annoyed"
+            print("sound annoyed")
+            self.soundAnnoyed.play()
+
+    def transitionLegs(self):
+        # up
+        if((self.dpadValue == (0,-1)) & (self.lbValue == 1)):
+            print("2 legged mode started")
+            GPIO.output(self.gpioPin_2_leg_mode, GPIO.HIGH)
+            time.sleep(0.5)
+            GPIO.output(self.gpioPin_2_leg_mode, GPIO.LOW)
+        # down
+        elif((self.dpadValue == (0,1)) & (self.lbValue == 1)):
+            print("3 legged mode started")
+            GPIO.output(self.gpioPin_3_leg_mode, GPIO.HIGH)
+            time.sleep(0.5)
+            GPIO.output(self.gpioPin_3_leg_mode, GPIO.LOW)
 
     def updateDome(self):
-        global syren10
-
         # debug
-        print "xValueRight {}".format(self.xValueRight)
-        print "yValueRight {}".format(self.yValueRight)
+        print("xValueRight {}".format(self.xValueRight))
+        print("yValueRight {}".format(self.yValueRight))
 
-        # x,y values coming from XboxController are rotated 90 degrees
+        # x,y values coming from XboxController are rotated 90 degrees,
         # so rotate 90 degrees counterclockwise back (x,y) = (-y, x)
         x1 = self.yValueRight * -1
         y1 = self.xValueRight
 
         # debug
-        print "x1 {}".format(x1)
-        print "y1 {}".format(x1)
+        print("x1 {}".format(x1))
+        print("y1 {}".format(x1))
 
         # i.e. if i push left, motor should be spinning left
         #      if i push right, motor should be spinning right
@@ -174,8 +216,8 @@ class MainController:
         dutyCycleSyren10 = self.translate(x1, -1, 1, 5, 10)
 
         # debug
-        print "dutyCycleSyren10 {}".format(dutyCycleSyren10)
-        print ""
+        print("dutyCycleSyren10 {}".format(dutyCycleSyren10))
+        print("")
 
         # assuming RC, then you need to generate pulses about 50 times per second
         # where the actual width of the pulse controls the speed of the motors,
@@ -188,29 +230,26 @@ class MainController:
         #    sabertoothS2.stop()
         # otherwise start them up
         # else:
-        syren10.ChangeDutyCycle(dutyCycleSyren10)
+        self.syren10.ChangeDutyCycle(dutyCycleSyren10)
         # time.sleep(0.1)
 
     def updateFeet(self):
-        global sabertoothS1
-        global sabertoothS2
-
         # debug
-        print "xValueLeft {}".format(self.xValueLeft)
-        print "yValueLeft {}".format(self.yValueLeft)
+        print("xValueLeft {}".format(self.xValueLeft))
+        print("yValueLeft {}".format(self.yValueLeft))
 
         # i.e. if i push left, left motor should be spinning backwards, right motor forwards
         #      if i push right, left motor should be spinning forwards, right motor backwards
 
         left, right = self.steering(self.xValueLeft, self.yValueLeft)
 
-        dutyCycleS1 = self.translate(left, -1, 1, 5, 10)
-        dutyCycleS2 = self.translate(right, -1, 1, 5, 10)
+        self.dutyCycleS1 = self.translate(left, -1, 1, 5, 10)
+        self.dutyCycleS2 = self.translate(right, -1, 1, 5, 10)
 
         # debug
-        print "dutyCycleS1 {}".format(dutyCycleS1)
-        print "dutyCycleS2 {}".format(dutyCycleS2)
-        print ""
+        print("dutyCycleS1 {}".format(self.dutyCycleS1))
+        print("dutyCycleS2 {}".format(self.dutyCycleS2))
+        print("")
 
         # assuming RC, then you need to generate pulses about 50 times per second
         # where the actual width of the pulse controls the speed of the motors,
@@ -223,8 +262,8 @@ class MainController:
         #    sabertoothS2.stop()
         # otherwise start them up
         # else:
-        sabertoothS1.ChangeDutyCycle(dutyCycleS1)
-        sabertoothS2.ChangeDutyCycle(dutyCycleS2)
+        self.sabertoothS1.ChangeDutyCycle(self.dutyCycleS1)
+        self.sabertoothS2.ChangeDutyCycle(self.dutyCycleS2)
         # time.sleep(0.1)
 
     def stop(self):
@@ -236,25 +275,23 @@ class MainController:
 if __name__ == '__main__':
 
     print ("MainController started")
-    controller = 0
+    print("creating MainController")
+    controller = MainController()
+    print("MainController instantiated")
     try:
-        print "creating MainController"
-        controller = MainController()
-        print "MainController instantiated"
         while controller.running:
             time.sleep(0.1)
 
     # Ctrl C
     except KeyboardInterrupt:
-        print "User cancelled"
+        print("User cancelled")
 
     # Error
     except:
-        print "Unexpected error:", sys.exc_info()[0]
+        print("Unexpected error:", sys.exc_info()[0])
         raise
 
     finally:
-        print
         print ("stop")
         # if its still running (probably because an error occured, stop it
         if controller.running: controller.stop()
