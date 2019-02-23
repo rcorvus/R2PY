@@ -1,12 +1,16 @@
-# sudo xboxdrv --silent & sudo python MainController.py &
+# python MainController.py
 
-# lsusb
+# if running this inside a python virtual environment,
+# you'll need to run "pip install pygame" to get the version of pygame that goes with the version of python in the environ
+
+# install xboxdrv driver on raspi with:
+# sudo apt-get install xboxdrv
+
 # add this to sudo nano /etc/rc.local and ctrl-o, enter, ctrl-x to save:
 # xboxdrv --daemon --silent &
-# sudo python MainController.py
 
 # to terminate xboxdrv
-# ps aux | grep xboxdrv
+# ps aux | grep xboxdrv (to get its pid)
 # sudo kill -TERM [put-your-pid-here]
 # sudo kill -KILL [put-your-pid-here]
 
@@ -16,19 +20,30 @@
 # to output sound to the HDMI audio
 # sudo amixer cset numid=3 2
 
+# to remote into raspberry pi
+# sudo apt-get install xrdp
+
 # Control with Xbox controller:
 # Use left stick for controlling driving around
 # Use right stick for looking around (i.e. turning his dome left and right)
 
+# Wiring:
+# The Pi GPIO are all set as INPUTS at power-up.
+# GPIO 0-8 have pull-ups to 3V3 applied as a default.
+# GPIO 9-27 have pull-downs to ground applied as a default.
+# This means that GPIO 0-8 will probably be seen as high and GPIO 9-27 will probably be seen as low.
+# You want to use GPIO > 8 or else your Arduino will be triggered when you power on the RPi
+# because any GPIO < 9 will be set to high until you run MainController
+
 # import modules
 import sys
-# import motorControl
 import RPi.GPIO as GPIO
 import math
-import XboxController
-import time
+from time import sleep
 import pygame
-from pygame import mixer
+from XboxController import XboxController
+from SoundController import SoundController
+from PeekabooController import PeekabooController
 
 class MainController:
 
@@ -39,11 +54,16 @@ class MainController:
         self.gpioPin_SabertoothS1 = 3
         self.gpioPin_SabertoothS2 = 5
         self.gpioPin_Syren10 = 7
-        self.gpioPin_2_leg_mode = 9
-        self.gpioPin_3_leg_mode = 11
+        self.gpioPin_2_leg_mode = 16
+        self.gpioPin_3_leg_mode = 18
 
         # setup gpio
-        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BOARD)
+
+        GPIO.setup(self.gpioPin_2_leg_mode, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.setup(self.gpioPin_3_leg_mode, GPIO.OUT, initial=GPIO.LOW)
+
         GPIO.setup(self.gpioPin_SabertoothS1, GPIO.OUT)
         # channel=3 frequency=50Hz
         self.sabertoothS1 = GPIO.PWM(self.gpioPin_SabertoothS1, 50)
@@ -59,9 +79,23 @@ class MainController:
         self.syren10 = GPIO.PWM(self.gpioPin_Syren10, 50)
         self.syren10.start(7.5)
 
-        GPIO.setup(self.gpioPin_2_leg_mode, GPIO.OUT)
-        GPIO.setup(self.gpioPin_3_leg_mode, GPIO.OUT)
 
+        self.initializeXboxController()
+        self.initializeSoundController()
+        self.initializePeekabooController()
+
+
+        self.running = True
+
+    def initializePeekabooController(self):
+        self.peekabooCtrlr = PeekabooController()
+        self.peekabooCtrlr.start()
+
+    def initializeSoundController(self):
+        self.soundCtrlr = SoundController()
+        self.soundCtrlr.start()
+
+    def initializeXboxController(self):
         # setup controller values
         self.xValueLeft = 0
         self.yValueLeft = 0
@@ -70,33 +104,27 @@ class MainController:
         self.dpadValue = (0,0)
         self.lbValue = 0
 
-        pygame.mixer.pre_init()
-
-        self.xboxCont = XboxController.XboxController(deadzone=0.2,
+        self.xboxCtrlr = XboxController(deadzone=0.2,
                                                       scale=1,
                                                       invertYAxis=True)
 
         # setup call backs
-        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.LTHUMBX, self.leftThumbX)
-        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.LTHUMBY, self.leftThumbY)
-        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.RTHUMBX, self.rightThumbX)
-        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.RTHUMBY, self.rightThumbY)
-        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.DPAD, self.dpadButton)
-        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.BACK, self.backButton)
-        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.A, self.aButton)
-        self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.LB, self.lbButton)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LTHUMBX, self.leftThumbX)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LTHUMBY, self.leftThumbY)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.RTHUMBX, self.rightThumbX)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.RTHUMBY, self.rightThumbY)
+        # self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LTRIGGER, self.leftTrigger) #triggers don't work
+        # self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.RTRIGGER, self.rightTrigger) #triggers don't work
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.DPAD, self.dpadButton)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.BACK, self.backButton)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.A, self.aButton)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.B, self.bButton)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.X, self.xButton)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.Y, self.yButton)
+        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LB, self.lbButton)
 
         # start the controller
-        self.xboxCont.start()
-
-        # load all the sounds
-        pygame.mixer.init()
-        soundRepository = "./sounds/"
-
-        soundAnnoyedFile = "8ANNOYED.mp3"
-        self.soundAnnoyed = mixer.Sound(soundRepository + soundAnnoyedFile)
-
-        self.running = True
+        self.xboxCtrlr.start()
 
     def steering(self, x, y):
         # assumes the initial (x,y) coordinates are in the -1.0/+1.0 range
@@ -150,6 +178,9 @@ class MainController:
         self.xValueLeft = xValue
         self.updateFeet()
 
+    def xValueLeftValue(self):
+        return self.xValueLeft
+
     def leftThumbY(self, yValue):
         self.yValueLeft = yValue
         self.updateFeet()
@@ -158,6 +189,9 @@ class MainController:
     def rightThumbX(self, xValue):
         self.xValueRight = xValue
         self.updateDome()
+
+    def xValueRightValue(self):
+        return self.xValueRight
 
     def rightThumbY(self, yValue):
         self.yValueRight = yValue
@@ -179,22 +213,62 @@ class MainController:
     def aButton(self, value):
         print("aButton = {}".format(value))
         if value == 1:
-            print("sound annoyed")
-            self.soundAnnoyed.play()
+            self.annoyed()
+
+
+    def xButton(self, value):
+        print("xButton = {}".format(value))
+        if value == 1:
+            self.worried()
+            if(self.lbValue == 1):
+                self.peekabooCtrlr.running = True
+
+
+    def bButton(self, value):
+        print("bButton = {}".format(value))
+        if value == 1:
+            self.whistle()
+            if(self.lbValue == 1):
+                self.peekabooCtrlr.stop()
+
+
+    def yButton(self, value):
+        print("yButton = {}".format(value))
+        if value == 1:
+            self.scream()
+
+
+    # behavioral functions
+    def annoyed(self):
+        print("sound annoyed")
+        SoundController.annoyed(self.soundCtrlr)
+
+    def worried(self):
+        print("sound worried")
+        SoundController.worried(self.soundCtrlr)
+
+    def whistle(self):
+        print("sound whistle")
+        SoundController.whistle(self.soundCtrlr)
+
+    def scream(self):
+        print("sound scream")
+        SoundController.scream(self.soundCtrlr)
+
 
     def transitionLegs(self):
         # up
         if((self.dpadValue == (0,-1)) & (self.lbValue == 1)):
-            print("2 legged mode started")
-            GPIO.output(self.gpioPin_2_leg_mode, GPIO.HIGH)
-            time.sleep(0.5)
-            GPIO.output(self.gpioPin_2_leg_mode, GPIO.LOW)
-        # down
-        elif((self.dpadValue == (0,1)) & (self.lbValue == 1)):
             print("3 legged mode started")
             GPIO.output(self.gpioPin_3_leg_mode, GPIO.HIGH)
-            time.sleep(0.5)
+            sleep(0.1)
             GPIO.output(self.gpioPin_3_leg_mode, GPIO.LOW)
+        # down
+        elif((self.dpadValue == (0,1)) & (self.lbValue == 1)):
+            print("2 legged mode started")
+            GPIO.output(self.gpioPin_2_leg_mode, GPIO.HIGH)
+            sleep(0.1)
+            GPIO.output(self.gpioPin_2_leg_mode, GPIO.LOW)
 
     def updateDome(self):
         # debug
@@ -231,7 +305,7 @@ class MainController:
         # otherwise start them up
         # else:
         self.syren10.ChangeDutyCycle(dutyCycleSyren10)
-        # time.sleep(0.1)
+        # sleep(0.1)
 
     def updateFeet(self):
         # debug
@@ -264,11 +338,12 @@ class MainController:
         # else:
         self.sabertoothS1.ChangeDutyCycle(self.dutyCycleS1)
         self.sabertoothS2.ChangeDutyCycle(self.dutyCycleS2)
-        # time.sleep(0.1)
+        # sleep(0.1)
 
     def stop(self):
         GPIO.cleanup()
-        self.xboxCont.stop()
+        self.xboxCtrlr.stop()
+        self.peekabooCtrlr.stop()
         self.running = False
 
 
@@ -280,7 +355,7 @@ if __name__ == '__main__':
     print("MainController instantiated")
     try:
         while controller.running:
-            time.sleep(0.1)
+            sleep(0.1)
 
     # Ctrl C
     except KeyboardInterrupt:

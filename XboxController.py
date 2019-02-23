@@ -7,9 +7,6 @@
 # install xboxdrv driver on raspi with:
 # sudo apt-get install xboxdrv
 
-# You need to run xboxdrv before you can use the module, run:
-
-
 # You may get an error asking you to run xboxdrv with the option --detach-kernel-driver, if so run:
 # NOTE: you don't need detach-kernel-driver if you run XboxController as sudo
 # sudo xboxdrv --silent --detach-kernel-driver &
