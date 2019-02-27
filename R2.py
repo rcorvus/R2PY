@@ -1,4 +1,6 @@
-# python MainController.py
+# python R2.py
+
+# NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
 
 # if running this inside a python virtual environment,
 # you'll need to run "pip install pygame" to get the version of pygame that goes with the version of python in the environ
@@ -9,7 +11,7 @@
 # add this to sudo nano /etc/rc.local and ctrl-o, enter, ctrl-x to save:
 # xboxdrv --daemon --silent &
 
-# to terminate xboxdrv
+# if you need to terminate xboxdrv:
 # ps aux | grep xboxdrv (to get its pid)
 # sudo kill -TERM [put-your-pid-here]
 # sudo kill -KILL [put-your-pid-here]
@@ -33,7 +35,7 @@
 # GPIO 9-27 have pull-downs to ground applied as a default.
 # This means that GPIO 0-8 will probably be seen as high and GPIO 9-27 will probably be seen as low.
 # You want to use GPIO > 8 or else your Arduino will be triggered when you power on the RPi
-# because any GPIO < 9 will be set to high until you run MainController
+# because any GPIO < 9 will be set to high until you run R2PY
 
 # import modules
 import sys
@@ -45,7 +47,7 @@ from XboxController import XboxController
 from SoundController import SoundController
 from PeekabooController import PeekabooController
 
-class MainController:
+class R2PY:
 
     def __init__(self):
         self.sabertoothS1 = 0
@@ -349,10 +351,10 @@ class MainController:
 
 if __name__ == '__main__':
 
-    print ("MainController started")
-    print("creating MainController")
-    controller = MainController()
-    print("MainController instantiated")
+    print ("R2PY started")
+    print("creating R2PY")
+    controller = R2PY()
+    print("R2PY instantiated")
     try:
         while controller.running:
             sleep(0.1)
