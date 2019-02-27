@@ -7,8 +7,7 @@
 
 # import the necessary packages
 from FaceDetector import FaceDetector
-from picamera.array import PiRGBArray
-from picamera import PiCamera
+from videostream import VideoStream
 import numpy as np
 import time
 import cv2
@@ -18,7 +17,6 @@ import threading
 class PeekabooController(threading.Thread):
 
     def __init__(self):
-        # setup threading
         threading.Thread.__init__(self)
 
         self.running = False
@@ -27,11 +25,8 @@ class PeekabooController(threading.Thread):
 
         self.soundCtrlr = SoundController()
 
-        # initialize the camera and grab a reference to the raw camera capture
-        self.camera = PiCamera()
-        self.camera.resolution = (640, 480)
-        self.camera.framerate = 32
-        self.rawCapture = PiRGBArray(self.camera, size=(640, 480))
+        self.video = VideoStream(src=0)
+        self.video.start()
 
         # construct the face detector and allow the camera to warm up
         self.faceDetector = FaceDetector(face)
@@ -47,7 +42,6 @@ class PeekabooController(threading.Thread):
     def run(self):
         self._start()
 
-
     # start looking
     def _start(self):
         self.running = True
@@ -62,93 +56,89 @@ class PeekabooController(threading.Thread):
 
         # run until the controller is stopped
         while (True):
-            if(self.running):
-                # capture frames from the camera
-                for f in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
-                    # grab the raw NumPy array representing the image
-                    frame = f.array
+            # capture frames from the camera
+            if(self.running == True):
+                frame = self.video.read()
+                # resize the frame and convert it to grayscale
+                frame = self.resizeImage(frame, width=500)
 
-                    # resize the frame and convert it to grayscale
-                    frame = self.resize(frame, width=300)
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-                    # detect faces in the image and then clone the frame
-                    # so that we can draw on it
-                    faceRects = self.faceDetector.detect(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-                    frameClone = frame.copy()
+                # detect faces in the image and then clone the frame
+                # so that we can draw on it
+                faceRects = self.faceDetector.detect(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+                frameClone = frame.copy()
 
-                    # where is everyone?
-                    if len(faceRects) <= 0:
-                        cv2.putText(frameClone, "WHERE IS EVERYONE?", (20, 20),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
-                        self.whereIsEveryone()
-                    else:
-                        # peekaboo!
-                        # R2 is happy to see someone
-                        self.iSeeSomeone()
+                # where is everyone?
+                if len(faceRects) <= 0:
+                    cv2.putText(frameClone, "WHERE IS EVERYONE?", (20, 20),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
+                    self.whereIsEveryone()
+                else:
+                    # peekaboo!
+                    # R2 is happy to see someone
+                    self.iSeeSomeone()
 
-                    # loop over the face bounding boxes and draw them
-                    for (fX, fY, fW, fH) in faceRects:
-                        cv2.rectangle(frameClone, (fX, fY), (fX + fW, fY + fH), (255, 0, 0), 2)
+                # loop over the face bounding boxes and draw them
+                for (fX, fY, fW, fH) in faceRects:
+                    cv2.rectangle(frameClone, (fX, fY), (fX + fW, fY + fH), (255, 0, 0), 2)
 
-                        # only turn head if face gets far out of center
-                        if ((previousX - 10) < fX < (previousX + 10)):
-                            direction = "NONE"
-                        elif fX < (previousX + 10):
-                            direction = "LEFT"
-                        elif fX > (previousX - 10):
-                            direction = "RIGHT"
+                    # only turn head if face gets far out of center
+                    if ((previousX - 10) < fX < (previousX + 10)):
+                        direction = "NONE"
+                    elif fX < (previousX + 10):
+                        direction = "LEFT"
+                    elif fX > (previousX - 10):
+                        direction = "RIGHT"
 
-                        # turn R2's head to keep face centered
-                        # if direction == "LEFT":
-                            # self.mainCtrlr.rightThumbX(self.mainCntlr, self.mainCtrlr.xValueRight - 10)
-                        # elif direction == "RIGHT":
-                            # self.mainCtrlr.rightThumbX(self.mainCntlr, self.mainCtrlr.xValueRight + 10)
+                    # turn R2's head to keep face centered
+                    # if direction == "LEFT":
+                        # self.mainCtrlr.rightThumbX(self.mainCntlr, self.mainCtrlr.xValueRight - 10)
+                    # elif direction == "RIGHT":
+                        # self.mainCtrlr.rightThumbX(self.mainCntlr, self.mainCtrlr.xValueRight + 10)
 
-                        cv2.putText(frameClone, "PEEKABOO!".format(direction), (fX, fY - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                    cv2.putText(frameClone, "PEEKABOO!".format(direction), (fX, fY - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.55, (0, 255, 0), 2)
+
+                    if direction != "NONE":
+                        cv2.putText(frameClone, "<Turn {}>".format(direction), (fX, fY - 0), cv2.FONT_HERSHEY_SIMPLEX,
                                     0.55, (0, 255, 0), 2)
 
-                        if direction != "NONE":
-                            cv2.putText(frameClone, "<Turn {}>".format(direction), (fX, fY - 0), cv2.FONT_HERSHEY_SIMPLEX,
-                                        0.55, (0, 255, 0), 2)
+                    previousX = fX
 
-                        previousX = fX
+                # show our detected faces, then clear the frame in preparation for the next frame
+                # NOTE: comment this out if you don't want the video stream window to show in terminal
+                cv2.imshow("Face", frameClone)
 
-                    # show our detected faces, then clear the frame in preparation for the next frame
-                    # NOTE:this is commented out for now because can't turn off without keyboard
-                    # cv2.imshow("Face", frameClone)
+                # write video to file
+                if self.writer is None:
+                    # store the image dimensions, initialize the video writer,
+                    # and construct the zeros array
+                    (h, w) = frameClone.shape[:2]
+                    self.writer = cv2.VideoWriter("test.avi", self.fourcc, 4,
+                                                  (w, h), True)
+                output = np.zeros((h, w, 3), dtype="uint8")
+                output[0:h, 0:w] = frameClone
+                self.writer.write(output)
 
-                    # write video to file
-                    if self.writer is None:
-                        # store the image dimensions, initialize the video writer,
-                        # and construct the zeros array
-                        (h, w) = frameClone.shape[:2]
-                        self.writer = cv2.VideoWriter("test.avi", self.fourcc, 4,
-                                                      (w, h), True)
-                    output = np.zeros((h, w, 3), dtype="uint8")
-                    output[0:h, 0:w] = frameClone
-                    self.writer.write(output)
+                # NOTE: comment this out if you don't want the video stream window to show in terminal
+                # if the 'q' key is pressed, stop the loop
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    print("keypress 'q', stopping Peekaboo")
+                    self.stop()
+                    break
 
-                    self.rawCapture.truncate(0)
-
-
-                    if(self.running == False):
-                        print("running = false, stopping Peekaboo")
-                        self.stop()
-                        break
-
-                    # NOTE:this is commented out for now because can't turn off without keyboard
-                    # # if the 'q' key is pressed, stop the loop
-                    # if cv2.waitKey(1) & 0xFF == ord("q"):
-                    #     print("keypress 'q', stopping Peekaboo")
-                    #     self.stop()
-                    #     break
+    def restart(self):
+        self.running = True
 
     def stop(self):
-        self.running = False
         print("stopping PeekabooController")
-        cv2.destroyAllWindows()
+        self.running = False
         self.writer.release()
+
+    def stopVideo(self):
+        self.video.stop()
+        cv2.destroyAllWindows()
 
     def whereIsEveryone(self):
         if(self.whereIsEveryoneFlag == False):
@@ -162,7 +152,7 @@ class PeekabooController(threading.Thread):
             self.whereIsEveryoneFlag = False
             self.iSeeSomeoneFlag = True
 
-    def resize(self, image, width = None, height = None, inter = cv2.INTER_AREA):
+    def resizeImage(self, image, width=None, height=None, inter=cv2.INTER_AREA):
         # initialize the dimensions of the image to be resized and
         # grab the image size
         dim = None
@@ -188,7 +178,7 @@ class PeekabooController(threading.Thread):
             dim = (width, int(h * r))
 
         # resize the image
-        resized = cv2.resize(image, dim, interpolation = inter)
+        resized = cv2.resize(image, dim, interpolation=inter)
 
         # return the resized image
         return resized

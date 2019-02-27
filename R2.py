@@ -223,7 +223,7 @@ class R2PY:
         if value == 1:
             self.worried()
             if(self.lbValue == 1):
-                self.peekabooCtrlr.running = True
+                self.peekabooCtrlr.restart()
 
 
     def bButton(self, value):
@@ -346,6 +346,7 @@ class R2PY:
         GPIO.cleanup()
         self.xboxCtrlr.stop()
         self.peekabooCtrlr.stop()
+        self.peekabooCtrlr.stopVideo()
         self.running = False
 
 
