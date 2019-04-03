@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+StartupNotify=true
+Name=Activate R2-D2
+Comment=Activate R2-D2
+Icon=/home/pi/r2_headshot.png
+Exec=/home/pi/run_r2.sh
+Categories=Application;

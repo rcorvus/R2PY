@@ -5,11 +5,10 @@
 
 # enable camera on RaspberryPi by running "sudo raspi-config" and choose "Enable Camera"
 
-# import the necessary packages
 from FaceDetector import FaceDetector
 from videostream import VideoStream
 import numpy as np
-import time
+from time import sleep
 import cv2
 from SoundController import SoundController
 import threading
@@ -21,22 +20,43 @@ class PeekabooController(threading.Thread):
 
         self.running = False
 
-        face = "cascades/haarcascade_frontalface_default.xml"
-
         self.soundCtrlr = SoundController()
 
-        self.video = VideoStream(src=0)
-        self.video.start()
-
-        # construct the face detector and allow the camera to warm up
-        self.faceDetector = FaceDetector(face)
-        time.sleep(0.1)
-
-        # choose xvid codec
-        self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        self.initVideo()
 
         self.whereIsEveryoneFlag = False
         self.iSeeSomeoneFlag = False
+        self.failure = False
+
+    def initVideo(self):
+        try:
+            self.video = VideoStream(src=0)
+        except:
+            print("video stream not found")
+        if(self.video is None):
+            print("video stream was not initialized")
+            return
+
+        try:
+            self.video.start()
+        except:
+            print("video failed to start")
+
+        # construct the face detector and allow the camera to warm up
+        try:
+            face = "cascades/haarcascade_frontalface_default.xml"
+            self.faceDetector = FaceDetector(face)
+            sleep(0.1)
+        except:
+            print("face detector init failed")
+
+        # choose xvid codec
+        try:
+            self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        except:
+            print("video writer not found")
+
+        sleep(0.1)
 
     #called by the thread
     def run(self):
@@ -59,6 +79,12 @@ class PeekabooController(threading.Thread):
             # capture frames from the camera
             if(self.running == True):
                 frame = self.video.read()
+                if(frame is None):
+                    print("ERROR: cannot read frame from video, stopping Peekaboo. If you want Peekaboo to work, connect camera and restart R2.py")
+                    self.failure = True
+                    self.stop()
+                    break
+
                 # resize the frame and convert it to grayscale
                 frame = self.resizeImage(frame, width=500)
 
@@ -129,16 +155,26 @@ class PeekabooController(threading.Thread):
                     break
 
     def restart(self):
+        print("starting PeekabooController")
+        if(self.failure == True):
+            print("ERROR: the video had failed to load.  If you want Peekaboo to work, you will need to connect the camera and restart R2.py")
+            return
         self.running = True
 
     def stop(self):
         print("stopping PeekabooController")
         self.running = False
-        self.writer.release()
+        if self.writer is not None:
+            self.writer.release()
 
     def stopVideo(self):
-        self.video.stop()
-        cv2.destroyAllWindows()
+        if(self.video is not None):
+            self.video.stop()
+
+        try:
+            cv2.destroyAllWindows()
+        except:
+            print("")
 
     def whereIsEveryone(self):
         if(self.whereIsEveryoneFlag == False):

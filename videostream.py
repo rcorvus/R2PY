@@ -1,4 +1,3 @@
-# import the necessary packages
 from webcamvideostream import WebcamVideoStream
 
 

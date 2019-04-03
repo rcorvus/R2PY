@@ -1,4 +1,13 @@
-# python R2.py
+# ./run_r2.sh
+
+# be sure to run "chmod +x run_r2.sh" to make it executable
+# if you edit run_r2.sh in the text editor, be sure to run "dos2unix run_r2.sh" to fix the carriage returns
+
+# in Main Menu Editor, create a new menu named ActivateR2D2.desktop in the Applications folder on the Raspberry Pi so you have a clickable icon to start R2:
+# and copy/paste the contents of ActivateR2D2.desktop into this and save
+# you will see the icon in the Applications menu
+
+
 
 # NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
 
@@ -22,6 +31,32 @@
 # to output sound to the HDMI audio
 # sudo amixer cset numid=3 2
 
+# (from https://www.waveshare.com/w/upload/1/19/7inch_HDMI_LCD_%28B%29_User_Manual.pdf):
+# To configure 7 inch LCD monitor, run "sudo nano /boot/config.txt" and add this to the bottom:
+# max_usb_current=1
+# hdmi_group=2
+# hdmi_mode=87
+# hdmi_cvt 800 480 60 6 0 0 0
+# hdmi_drive=1
+
+# (and if you need to rotate the screen to vertical, add this too:
+# display_rotate=3
+
+# if you need to rotate the touchscreen to vertical, then:
+# sudo apt-get install xserver-xorg-input-libinput
+# sudo mkdir /etc/X11/xorg.conf.d
+# sudo cp /usr/share/X11/xorg.conf.d/40-libinput.conf /etc/X11/xorg.conf.d/
+# sudo nano /etc/X11/xorg.conf.d/40-libinput.conf
+
+# and change this section:
+# Section "InputClass"
+#         Identifier "libinput touchscreen catchall"
+#         MatchIsTouchscreen "on"
+#         Option "CalibrationMatrix" "-1 0 1 0 -1 1 0 0 1"
+#         MatchDevicePath "/dev/input/event*"
+#         Driver "libinput"
+# EndSection
+
 # to remote into raspberry pi
 # sudo apt-get install xrdp
 
@@ -37,7 +72,13 @@
 # You want to use GPIO > 8 or else your Arduino will be triggered when you power on the RPi
 # because any GPIO < 9 will be set to high until you run R2PY
 
-# import modules
+# The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1
+# The Sabertooth2x25 dip switches should be (0 is off, 1 is on):  0 1 0 0 1 1
+
+# TODO: I was trying to get it to start at system boot with
+# "sudo crontab -e" and this line:
+# @reboot /home/pi/run_r2.sh
+
 import sys
 import RPi.GPIO as GPIO
 import math
@@ -55,7 +96,7 @@ class R2PY:
         self.syren10 = 0
         self.gpioPin_SabertoothS1 = 3
         self.gpioPin_SabertoothS2 = 5
-        self.gpioPin_Syren10 = 7
+        self.gpioPin_Syren10 = 12
         self.gpioPin_2_leg_mode = 16
         self.gpioPin_3_leg_mode = 18
 
@@ -67,25 +108,23 @@ class R2PY:
         GPIO.setup(self.gpioPin_3_leg_mode, GPIO.OUT, initial=GPIO.LOW)
 
         GPIO.setup(self.gpioPin_SabertoothS1, GPIO.OUT)
-        # channel=3 frequency=50Hz
+        # channel=(pin_SabertoothS1) frequency=50Hz
         self.sabertoothS1 = GPIO.PWM(self.gpioPin_SabertoothS1, 50)
         self.sabertoothS1.start(7.5)
 
         GPIO.setup(self.gpioPin_SabertoothS2, GPIO.OUT)
-        # channel=5 frequency=50Hz
+        # channel=(pin_SabertoothS2) frequency=50Hz
         self.sabertoothS2 = GPIO.PWM(self.gpioPin_SabertoothS2, 50)
         self.sabertoothS2.start(7.5)
 
         GPIO.setup(self.gpioPin_Syren10, GPIO.OUT)
-        # channel=7 frequency=50Hz
+        # channel=(pin_Syren10) frequency=50Hz
         self.syren10 = GPIO.PWM(self.gpioPin_Syren10, 50)
         self.syren10.start(7.5)
-
 
         self.initializeXboxController()
         self.initializeSoundController()
         self.initializePeekabooController()
-
 
         self.running = True
 
@@ -98,35 +137,39 @@ class R2PY:
         self.soundCtrlr.start()
 
     def initializeXboxController(self):
-        # setup controller values
-        self.xValueLeft = 0
-        self.yValueLeft = 0
-        self.xValueRight = 0
-        self.yValueRight = 0
-        self.dpadValue = (0,0)
-        self.lbValue = 0
+        try:
+            # setup controller values
+            self.xValueLeft = 0
+            self.yValueLeft = 0
+            self.xValueRight = 0
+            self.yValueRight = 0
+            self.dpadValue = (0,0)
+            self.lbValue = 0
 
-        self.xboxCtrlr = XboxController(deadzone=0.2,
-                                                      scale=1,
-                                                      invertYAxis=True)
+            self.xboxCtrlr = XboxController(deadzone=0.5,
+                                            scale=1,
+                                            invertYAxis=True)
 
-        # setup call backs
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LTHUMBX, self.leftThumbX)
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LTHUMBY, self.leftThumbY)
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.RTHUMBX, self.rightThumbX)
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.RTHUMBY, self.rightThumbY)
-        # self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LTRIGGER, self.leftTrigger) #triggers don't work
-        # self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.RTRIGGER, self.rightTrigger) #triggers don't work
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.DPAD, self.dpadButton)
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.BACK, self.backButton)
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.A, self.aButton)
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.B, self.bButton)
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.X, self.xButton)
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.Y, self.yButton)
-        self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LB, self.lbButton)
+            # setup call backs
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LTHUMBX, self.leftThumbX)
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LTHUMBY, self.leftThumbY)
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.RTHUMBX, self.rightThumbX)
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.RTHUMBY, self.rightThumbY)
+            # self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LTRIGGER, self.leftTrigger) #triggers don't work
+            # self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.RTRIGGER, self.rightTrigger) #triggers don't work
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.DPAD, self.dpadButton)
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.BACK, self.backButton)
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.A, self.aButton)
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.B, self.bButton)
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.X, self.xButton)
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.Y, self.yButton)
+            self.xboxCtrlr.setupControlCallback(self.xboxCtrlr.XboxControls.LB, self.lbButton)
 
-        # start the controller
-        self.xboxCtrlr.start()
+            # start the controller
+            self.xboxCtrlr.start()
+
+        except:
+            print("ERROR: could not connect to Xbox controller")
 
     def steering(self, x, y):
         # assumes the initial (x,y) coordinates are in the -1.0/+1.0 range
@@ -292,8 +335,9 @@ class R2PY:
         dutyCycleSyren10 = self.translate(x1, -1, 1, 5, 10)
 
         # debug
+        print("---------------------")
         print("dutyCycleSyren10 {}".format(dutyCycleSyren10))
-        print("")
+        print("---------------------")
 
         # assuming RC, then you need to generate pulses about 50 times per second
         # where the actual width of the pulse controls the speed of the motors,

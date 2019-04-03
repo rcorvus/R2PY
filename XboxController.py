@@ -1,7 +1,3 @@
-#Martin O'Hanlon
-#www.stuffaboutcode.com
-#http://www.stuffaboutcode.com/2014/10/raspberry-pi-xbox-360-controller-python.html
-#A class for reading values from an xbox controller
 # uses xboxdrv and pygame
 
 # install xboxdrv driver on raspi with:
@@ -18,7 +14,7 @@ import pygame
 from pygame.locals import *
 import os, sys
 import threading
-import time
+from time import sleep
 
 """
 NOTES - pygame events and values
@@ -137,6 +133,7 @@ class XboxController(threading.Thread):
         
         #persist values
         self.running = False
+        self.initialized = False
         self.controllerCallBack = controllerCallBack
         self.joystickNo = joystickNo
         self.lowerDeadzone = deadzone * -1
@@ -165,8 +162,6 @@ class XboxController(threading.Thread):
                               self.XboxControls.RIGHTTHUMB:0,
                               self.XboxControls.DPAD:(0,0)}
 
-        #setup pygame
-        self._setupPygame(joystickNo)
 
     #Create controller properties
     @property
@@ -243,6 +238,10 @@ class XboxController(threading.Thread):
 
     #setup pygame
     def _setupPygame(self, joystickNo):
+        pygame.quit()
+        pygame.joystick.quit()
+
+
         # set SDL to use the dummy NULL video driver, so it doesn't need a windowing system.
         os.environ["SDL_VIDEODRIVER"] = "dummy"
         # init pygame
@@ -251,12 +250,19 @@ class XboxController(threading.Thread):
         screen = pygame.display.set_mode((1, 1))
         # init the joystick control
         pygame.joystick.init()
+
         # how many joysticks are there
-        #print pygame.joystick.get_count()
-        # get the first joystick
-        joy = pygame.joystick.Joystick(joystickNo)
-        # init that joystick
-        joy.init()
+        # print("joysticks: " + str(pygame.joystick.get_count()))
+        if(pygame.joystick.get_count() > 0):
+            try:
+                joy = pygame.joystick.Joystick(joystickNo)
+                joy.init()
+                self.initialized = True
+            except:
+                print("ERROR: joystick not found, be sure to turn on the Xbox controller and wait for it to connect")
+                return
+        else:
+            return
 
     #called by the thread
     def run(self):
@@ -264,42 +270,50 @@ class XboxController(threading.Thread):
 
     #start the controller
     def _start(self):
-        
+
+        #keep trying to initialize until it finds a joystick
+        while(self.initialized == False):
+            self._setupPygame(self.joystickNo)
+
         self.running = True
-        
         #run until the controller is stopped
         while(self.running):
-            #react to the pygame events that come from the xbox controller
-            for event in pygame.event.get():
 
-                #thumb sticks, trigger buttons                    
-                if event.type == JOYAXISMOTION:
-                    #is this axis on our xbox controller
-                    if event.axis in self.AXISCONTROLMAP:
-                        #is this a y axis
-                        yAxis = True if (event.axis == self.PyGameAxis.LTHUMBY or event.axis == self.PyGameAxis.RTHUMBY) else False
-                        #update the control value
-                        self.updateControlValue(self.AXISCONTROLMAP[event.axis],
-                                                self._sortOutAxisValue(event.value, yAxis))
-                    #is this axis a trigger
-                    if event.axis in self.TRIGGERCONTROLMAP:
-                        #update the control value
-                        self.updateControlValue(self.TRIGGERCONTROLMAP[event.axis],
-                                                self._sortOutTriggerValue(event.value))
-                        
-                #d pad
-                elif event.type == JOYHATMOTION:
-                    #update control value
-                    self.updateControlValue(self.XboxControls.DPAD, event.value)
+            try:
+                #react to the pygame events that come from the xbox controller
+                for event in pygame.event.get():
 
-                #button pressed and unpressed
-                elif event.type == JOYBUTTONUP or event.type == JOYBUTTONDOWN:
-                    #is this button on our xbox controller
-                    if event.button in self.BUTTONCONTROLMAP:
+                    #thumb sticks, trigger buttons
+                    if event.type == JOYAXISMOTION:
+                        #is this axis on our xbox controller
+                        if event.axis in self.AXISCONTROLMAP:
+                            #is this a y axis
+                            yAxis = True if (event.axis == self.PyGameAxis.LTHUMBY or event.axis == self.PyGameAxis.RTHUMBY) else False
+                            #update the control value
+                            self.updateControlValue(self.AXISCONTROLMAP[event.axis],
+                                                    self._sortOutAxisValue(event.value, yAxis))
+                        #is this axis a trigger
+                        if event.axis in self.TRIGGERCONTROLMAP:
+                            #update the control value
+                            self.updateControlValue(self.TRIGGERCONTROLMAP[event.axis],
+                                                    self._sortOutTriggerValue(event.value))
+
+                    #d pad
+                    elif event.type == JOYHATMOTION:
                         #update control value
-                        self.updateControlValue(self.BUTTONCONTROLMAP[event.button],
-                                                self._sortOutButtonValue(event.type))
-        
+                        self.updateControlValue(self.XboxControls.DPAD, event.value)
+
+                    #button pressed and unpressed
+                    elif event.type == JOYBUTTONUP or event.type == JOYBUTTONDOWN:
+                        #is this button on our xbox controller
+                        if event.button in self.BUTTONCONTROLMAP:
+                            #update control value
+                            self.updateControlValue(self.BUTTONCONTROLMAP[event.button],
+                                                    self._sortOutButtonValue(event.type))
+            except:
+                print("could not connect to Xbox controller, please connect and try again")
+                self.stop()
+
     #stops the controller
     def stop(self):
         self.running = False
@@ -374,7 +388,7 @@ if __name__ == '__main__':
         xboxCont.start()
         print("xbox controller running")
         while True:
-            time.sleep(1)
+            sleep(1)
 
     #Ctrl C
     except KeyboardInterrupt:

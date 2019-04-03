@@ -33,10 +33,10 @@ const int pin_3_legged_mode = 12;
 
 // NANO Pins:
 // PWM Pins 6, 8, 9, 12, 13, 14
-const int pin_left_controller_TX = 6;
-const int pin_left_controller_RX = 8;
-const int pin_right_controller_TX = 13;
-const int pin_right_controller_RX = 14;
+const int pin_left_controller_TX = 8;//D5
+const int pin_left_controller_RX = 9;//D6
+const int pin_right_controller_TX = 10;//D7
+const int pin_right_controller_RX = 11;//D8
 
 int two_legged_state = 0;
 int three_legged_state = 0;
