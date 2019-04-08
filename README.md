@@ -1,7 +1,7 @@
 # R2PY  
 ## Raspberry Pi 3, Python, and Arduino code for Controlling a Three Legged Droid  
 
-This control system for a three legged droid runs on a Raspbery Pi 3 and is written in Python 3.6.  Optionally if you want a 2-3-2 transition system, included is the Arduino Nano code and hardware setup.
+This control system for a three legged droid runs on a Raspbery Pi 3 and is written in Python 3.6.  Optionally if you want a 2-3-2 transition system, included is the Arduino Nano code and hardware setup needed.
 
 The R2PY system includes Xbox360 joystick controller support for driving the foot motors, turning the dome head, generating onboard sounds, and mixing sounds from other sources (such as Marcduino).  
 
