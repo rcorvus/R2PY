@@ -1,20 +1,6 @@
 /*
 v1.0
 by Robert Corvus
-
-Hardware:
-Arduino UNO
-Microsoft Xbox 360 Controller
-Xbox 360 USB Wireless Reciver
-Sabertooth2x25 Motor Controller
-Syren10 Motor Controller
-Sparkfun MP3 Trigger
-
-Set Sabertooth 2x25/2x12 Dip Switches 1 and 2 Down, All Others Up
-For SyRen Simple Serial Set Switches 1 and 2 Down, All Others Up
-For SyRen Simple Serial Set Switchs 2 & 4 Down, All Others Up
-Placed a 10K ohm resistor between S1 & GND on the SyRen 10 itself
-
 */
 
 #include <Servo.h>
@@ -22,25 +8,22 @@ Placed a 10K ohm resistor between S1 & GND on the SyRen 10 itself
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
-const int pin_2_legged_mode = 11;
-const int pin_3_legged_mode = 12;
+const int test_led = 13;
 
-// UNO Pins:
-//const int pin_left_controller_TX = 8;
-//const int pin_left_controller_RX = 9;
-//const int pin_right_controller_TX = 10;
-//const int pin_right_controller_RX = 11;
+const int pin_2_legged_mode = 11;//D11
+const int pin_3_legged_mode = 12;//D12
 
 // NANO Pins:
 // PWM Pins 6, 8, 9, 12, 13, 14
-const int pin_left_controller_TX = 8;//D5
-const int pin_left_controller_RX = 9;//D6
-const int pin_right_controller_TX = 10;//D7
-const int pin_right_controller_RX = 11;//D8
+const int pin_left_controller_TX = 5;//D5
+const int pin_left_controller_RX = 6;//D6
+const int pin_right_controller_TX = 7;//D7
+const int pin_right_controller_RX = 8;//D8
 
 int two_legged_state = 0;
 int three_legged_state = 0;
 
+char received_data = 0;
 
 // *** 2-3-2 transition BEGIN ***
 
@@ -99,8 +82,8 @@ void moveLegsTo(uint16_t value) {
   Serial.println(target);
 
   //wait for both legs to become available
-  while (jrkLEFT.available() < 2);
-  while (jrkRIGHT.available() < 2);
+  //while (jrkLEFT.available() < 2);
+  //while (jrkRIGHT.available() < 2);
   
   jrkLEFT.write(0xAA);
   jrkLEFT.write(LEG_LEFT);
@@ -126,6 +109,7 @@ void transition_to_2_legged_mode(){
 }
 
 void transition_to_3_legged_mode(){
+  Serial.println("BEGIN 3-LEGGED MODE");
 
   //moveFootTo(FOOT_POSITION_3);
   //while(GetFootPosition(0xA5) < FOOT_POSITION_MIDDLE);//TODO: calibrate this
@@ -202,18 +186,43 @@ void ShowCurrentLegAndFootPositions()
 
 void setup(){ 
 //  To monitor output with the arduino Serial Monitor for PC/Mac, set the baud rate to 115200
-//  Serial.begin(115200);
-//  delay(20);
+  Serial.begin(115200);
+  delay(20);
 
   // init JRK controllers
   legsInit();
   
+  pinMode(test_led, OUTPUT);
   pinMode(pin_2_legged_mode, INPUT);
   pinMode(pin_3_legged_mode, INPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
+  Serial.println("setup complete");
 //  attachInterrupt(digitalPinToInterrupt(pin_2_legged_mode), transition_to_2_legged_mode, RISING);
 //  attachInterrupt(digitalPinToInterrupt(pin_3_legged_mode), transition_to_3_legged_mode, RISING);
+}
+
+
+void trigger_2_legged_mode(){
+  Serial.println("triggering 2 legged mode");
+  digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(test_led, HIGH);
+  delay(2000);
+  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(test_led, LOW);
+
+  transition_to_2_legged_mode();
+}
+
+void trigger_3_legged_mode(){
+  Serial.println("triggering 3 legged mode");
+  digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(test_led, HIGH);
+  delay(2000);
+  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(test_led, LOW);
+
+  transition_to_3_legged_mode();
 }
 
 void loop(){
@@ -223,15 +232,33 @@ void loop(){
 //  digitalWrite(LED_BUILTIN, LOW);
 //  delay(1000); 
 
+  if (Serial.available() > 0 )   // Send data only when you receive data:
+  {
+    received_data = Serial.read();        //Read the incoming data send via serial monitor & store into data
+    Serial.print(received_data);          //Print Value inside data in Serial monitor
+    Serial.print("\n");
+
+    if (received_data == '2')
+    {
+      trigger_2_legged_mode();
+    }
+    
+    if (received_data == '3')
+    {
+      trigger_3_legged_mode();
+    }
+  }
+ 
+
   two_legged_state = digitalRead(pin_2_legged_mode);
   if(two_legged_state == HIGH){
-    digitalWrite(LED_BUILTIN, LOW);
-    transition_to_2_legged_mode();
+    Serial.println("received two_legged_state HIGH");
+    trigger_2_legged_mode();
   }
   three_legged_state = digitalRead(pin_3_legged_mode);
   if(three_legged_state == HIGH){
-    digitalWrite(LED_BUILTIN, HIGH);
-    transition_to_3_legged_mode();
+    Serial.println("received three_legged_state HIGH");
+    trigger_3_legged_mode();
   }
 
   // 2-3-2 Transition

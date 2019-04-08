@@ -154,7 +154,7 @@ class PeekabooController(threading.Thread):
                     self.stop()
                     break
 
-    def restart(self):
+    def resume(self):
         print("starting PeekabooController")
         if(self.failure == True):
             print("ERROR: the video had failed to load.  If you want Peekaboo to work, you will need to connect the camera and restart R2.py")

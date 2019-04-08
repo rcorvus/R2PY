@@ -40,7 +40,8 @@
 # hdmi_drive=1
 
 # (and if you need to rotate the screen to vertical, add this too:
-# display_rotate=3
+# display_rotate=1
+# these are the options: display_rotate=1 #1: 90; 2: 180; 3: 270
 
 # if you need to rotate the touchscreen to vertical, then:
 # sudo apt-get install xserver-xorg-input-libinput
@@ -52,10 +53,15 @@
 # Section "InputClass"
 #         Identifier "libinput touchscreen catchall"
 #         MatchIsTouchscreen "on"
-#         Option "CalibrationMatrix" "-1 0 1 0 -1 1 0 0 1"
+#         Option "CalibrationMatrix" "0 1 0 -1 0 1 0 0 1"
 #         MatchDevicePath "/dev/input/event*"
 #         Driver "libinput"
 # EndSection
+
+# these are the options for rotation:
+# 90 degree: Option "CalibrationMatrix" "0 1 0 -1 0 1 0 0 1"
+# 180 degree: Option "CalibrationMatrix" "-1 0 1 0 -1 1 0 0 1"
+# 270 degree: Option "CalibrationMatrix" "0 -1 1 1 0 0 0 0 1"
 
 # to remote into raspberry pi
 # sudo apt-get install xrdp
@@ -146,7 +152,7 @@ class R2PY:
             self.dpadValue = (0,0)
             self.lbValue = 0
 
-            self.xboxCtrlr = XboxController(deadzone=0.5,
+            self.xboxCtrlr = XboxController(deadzone=0.3,
                                             scale=1,
                                             invertYAxis=True)
 
@@ -266,7 +272,7 @@ class R2PY:
         if value == 1:
             self.worried()
             if(self.lbValue == 1):
-                self.peekabooCtrlr.restart()
+                self.peekabooCtrlr.resume()
 
 
     def bButton(self, value):
