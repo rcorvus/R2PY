@@ -3,7 +3,7 @@
 
 This control system for a three legged droid runs on a Raspbery Pi 3 and is written in Python 3.6.  Optionally if you want a 2-3-2 transition system, included is the Arduino Nano code and hardware setup.
 
-R2PY includes Xbox360 joystick controller support, onboard sounds, and mixing sounds from other sources (such as Marcduino).
+R2PY includes Xbox360 joystick controller support, onboard sounds, and mixing sounds from other sources (such as Marcduino).  
 R2PY also has a "peekaboo" system that uses OpenCV and machine learning to see through a USB camera or PiCamera and detects human faces.  If it doesn't see anyone it coos worriedly a couple times and when it spots someone it whistles excitedly.  Output from the camera is shown on a HDMI connected touchscreen with bounding boxes around the detected face.
 
 ## Hardware Requirements
