@@ -86,20 +86,22 @@ Additional setup instructions are in each of the code files.
 |M2B	Left Motor Terminal     |2|
 
 ### Optional for 2-3-2 transition
-#### Connecting the Raspberry Pi 3 to the Arduino Nano 
-|RaspberryPi3   | ArduinoNano|
+#### Connecting the Raspberry Pi 3 to the Arduino Nano  
+
+|RaspberryPi3   | ArduinoNano|  
 | --- | --- |  
-|16      |D11|
-|18      |D12|
+|16      |D11|  
+|18      |D12|  
 
 #### Connecting the Arduino Nano to the Pololu Jrk 21v3 and leg actuators  
-https://www.pololu.com/docs/0J38/all
-|PololuJrk21v3   |ArduinoNano|
+https://www.pololu.com/docs/0J38/all  
+
+|PololuJrk21v3   |ArduinoNano|  
 | --- | --- |  
-|Left Leg Controller TX | D5|
-|Left Leg Controller RX | D6|
-|Right Leg Controller TX| D7|
-|Right Leg Controller RX| D8|
+|Left Leg Controller TX | D5|  
+|Left Leg Controller RX | D6|  
+|Right Leg Controller TX| D7|  
+|Right Leg Controller RX| D8|  
 
 In order to get the Peekaboo system working, you'll need to configure OpenCV on your Raspberry Pi.  Here are [extremely good instructions](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/) on how to install everything you need, but even better if you buy his [Practical Python And OpenCV QuickStart bundle](https://www.pyimagesearch.com/practical-python-opencv/), he gives you a Raspberry Pi image file preconfigured with everything you need.  To me, that was worth $100 in time savings right there, and his tutorials are great too.  
 
