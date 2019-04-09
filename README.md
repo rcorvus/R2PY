@@ -9,7 +9,8 @@ R2PY also has a "peekaboo" system that uses machine learning to see through a US
 
 Optionally if you want a 2-3-2 transition system, included is the Arduino Nano code and hardware setup needed.  
 
-## Hardware Requirements
+## Hardware Requirements  
+Additional setup instructions are in each of the code files.
 
 Raspberry Pi 3  
 
