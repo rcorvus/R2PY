@@ -97,7 +97,7 @@ https://www.pololu.com/docs/0J38/all
 
 In order to get the Peekaboo system working, you'll need to configure OpenCV on your Raspberry Pi.  Here are [extremely good instructions](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/) on how to install everything you need, but even better if you buy his [Practical Python And OpenCV QuickStart bundle](https://www.pyimagesearch.com/practical-python-opencv/), he gives you a Raspberry Pi image file preconfigured with everything you need.  To me, that was worth $100 in time savings right there, and his tutorials are great too.  
 
-Many thanks for the Sabertooth and Syren hardware configuration from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code developed by Martin O'Hanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup from jrosebr (which I made several modifications).
+Many thanks for the Sabertooth and Syren hardware configuration from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code developed by martinohanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup from jrosebr (which I made several modifications).
 
 Let me know if you have any trouble with this system or if you have trouble submitting pull requests.  
 
