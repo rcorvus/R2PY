@@ -10,7 +10,6 @@ R2PY also has a "peekaboo" system that uses machine learning to see through a US
 Optionally if you want a 2-3-2 transition system, included is the Arduino Nano code and hardware setup needed.  
 
 ## Hardware Requirements  
-Additional setup instructions are in each of the code files.
 
 Raspberry Pi 3  
 
@@ -30,23 +29,27 @@ Xbox 360 Wireless Receiver (the Microsoft brand only costs a little more than th
 
 Arduino Nano (for sending signals from the Raspberry Pi to the Nano to the Pololu Jrk to the leg actuators)  
 
-## Sound  
+### Sound  
 15watt (or bigger) Amp - something like this: https://www.amazon.com/gp/product/B00C4MT274 or this: https://www.amazon.com/gp/product/B0181Z4M4A  
 
 3.5" (or bigger) Speakers - something like this: https://www.amazon.com/gp/product/B0007L8BT4  
 
 Sound Mixer - if you have an additional sound source like Marcduino - something like this: https://www.amazon.com/gp/product/B0002BG2S6  
 
-## Camera  
+### Camera  
 USB Web Camera - something like this: https://www.amazon.com/gp/product/B01N8YH5VY  
 
-## Video Output  
+### Video Output  
 HDMI Touch Screen - 7" or so, something like this:  https://www.amazon.com/gp/product/B01ID5BQTC  
 
-## Miscellaneous  
+### Miscellaneous  
 Utility Stool - slaving over a hot robot all day is back breaking work, you'll want something like this: https://www.amazon.com/gp/product/B072Y2MRY2   :-)  
 
-## Connecting the Raspberry Pi to the Syren 10 and dome motor  
+## Setup & Connection  
+
+Additional setup instructions are in each of the code files.  
+
+### Connecting the Raspberry Pi to the Syren 10 and dome motor  
 
 |Syren10	| RaspberryPi3 |  
 | --- | --- |  
@@ -100,6 +103,7 @@ https://www.pololu.com/docs/0J38/all
 
 In order to get the Peekaboo system working, you'll need to configure OpenCV on your Raspberry Pi.  Here are [extremely good instructions](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/) on how to install everything you need, but even better if you buy his [Practical Python And OpenCV QuickStart bundle](https://www.pyimagesearch.com/practical-python-opencv/), he gives you a Raspberry Pi image file preconfigured with everything you need.  To me, that was worth $100 in time savings right there, and his tutorials are great too.  
 
+### Acknowledgements
 Many thanks for the Sabertooth and Syren hardware configuration adapted from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code adapted from martinohanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup adapted from jrosebr (which I made several modifications).
 
 Let me know if you have any trouble with this system or if you have trouble submitting pull requests.  
