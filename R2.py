@@ -100,9 +100,12 @@ class R2PY:
         self.sabertoothS1 = 0
         self.sabertoothS2 = 0
         self.syren10 = 0
-        self.gpioPin_SabertoothS1 = 3
-        self.gpioPin_SabertoothS2 = 5
-        self.gpioPin_Syren10 = 12
+
+        # GPIO12(32) & GPIO18(12) share a setting as do GPIO13(33) & GPIO19(35)
+        self.gpioPin_SabertoothS1 = 12
+        self.gpioPin_SabertoothS2 = 32
+        self.gpioPin_Syren10 = 33
+        # 16 and 18 initialize to LOW at boot
         self.gpioPin_2_leg_mode = 16
         self.gpioPin_3_leg_mode = 18
 
