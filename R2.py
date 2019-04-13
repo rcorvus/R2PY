@@ -124,12 +124,15 @@ class R2PY:
         self.pi.write(self.gpioPin_3_leg_mode, 0)
 
         self.pi.set_mode(self.gpioPin_Syren10, pigpio.OUTPUT)
+        self.pi.set_PWM_frequency(self.gpioPin_Syren10, 50)
         self.pi.set_servo_pulsewidth(self.gpioPin_Syren10, 0)
 
         self.pi.set_mode(self.gpioPin_SabertoothS1, pigpio.OUTPUT)
+        # self.pi.set_PWM_frequency(self.gpioPin_SabertoothS1, 50)
         self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS1, 0)
 
         self.pi.set_mode(self.gpioPin_SabertoothS2, pigpio.OUTPUT)
+        # self.pi.set_PWM_frequency(self.gpioPin_SabertoothS2, 50)
         self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS2, 0)
 
         self.initializeXboxController()
@@ -270,14 +273,12 @@ class R2PY:
         if value == 1:
             self.annoyed()
 
-
     def xButton(self, value):
         print("xButton = {}".format(value))
         if value == 1:
             self.worried()
             if(self.lbValue == 1):
                 self.peekabooCtrlr.resume()
-
 
     def bButton(self, value):
         print("bButton = {}".format(value))
@@ -353,7 +354,6 @@ class R2PY:
         print("---------------------")
 
         self.pi.set_servo_pulsewidth(self.gpioPin_Syren10, dutyCycleSyren10)
-
 
     def updateFeet(self):
         # debug
