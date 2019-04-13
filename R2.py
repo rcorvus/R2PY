@@ -7,8 +7,6 @@
 # and copy/paste the contents of ActivateR2D2.desktop into this and save
 # you will see the icon in the Applications menu
 
-
-
 # NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
 
 # if running this inside a python virtual environment,
@@ -81,12 +79,22 @@
 # The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1
 # The Sabertooth2x25 dip switches should be (0 is off, 1 is on):  0 1 0 0 1 1
 
-# TODO: I was trying to get it to start at system boot with
+# setup pigpio:
+# if virtual environment, need to copy your pigpio.py and pigpio-1.42.dist-info folder
+# from /usr/local/lib/python3.5/dist-packages
+# to /home/pi/.virtualenvs/py3cv3/lib/python3.5/site-packages
+# then while running virtual environment:
+# sudo apt-get install pigpio
+# then to start the pigpiod daemon on system boot run this:
+# sudo systemctl enable pigpiod
+# sudo systemctl start pigpiod
+
+# TODO: I was trying to get it to start at system boot with this, but not working maybe because of imshow?
 # "sudo crontab -e" and this line:
 # @reboot /home/pi/run_r2.sh
 
 import sys
-import RPi.GPIO as GPIO
+import pigpio
 import math
 from time import sleep
 import pygame
@@ -97,39 +105,32 @@ from PeekabooController import PeekabooController
 class R2PY:
 
     def __init__(self):
-        self.sabertoothS1 = 0
-        self.sabertoothS2 = 0
-        self.syren10 = 0
-
+        # if you want to switch to hardware PWM, remember:
         # GPIO12(32) & GPIO18(12) share a setting as do GPIO13(33) & GPIO19(35)
-        self.gpioPin_SabertoothS1 = 12
-        self.gpioPin_SabertoothS2 = 32
-        self.gpioPin_Syren10 = 33
-        # 16 and 18 initialize to LOW at boot
-        self.gpioPin_2_leg_mode = 16
-        self.gpioPin_3_leg_mode = 18
 
-        # setup gpio
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BOARD)
+        # NOTE: all gpio pin numbers are BCM
+        self.gpioPin_SabertoothS1 = 18
+        self.gpioPin_SabertoothS2 = 12
+        self.gpioPin_Syren10 = 13
+        # board pins 16 (BCM 23) and 18 (BCM 24) initialize to LOW at boot
+        self.gpioPin_2_leg_mode = 23
+        self.gpioPin_3_leg_mode = 24
 
-        GPIO.setup(self.gpioPin_2_leg_mode, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(self.gpioPin_3_leg_mode, GPIO.OUT, initial=GPIO.LOW)
+        self.pi = pigpio.pi()
 
-        GPIO.setup(self.gpioPin_SabertoothS1, GPIO.OUT)
-        # channel=(pin_SabertoothS1) frequency=50Hz
-        self.sabertoothS1 = GPIO.PWM(self.gpioPin_SabertoothS1, 50)
-        self.sabertoothS1.start(7.5)
+        self.pi.set_mode(self.gpioPin_2_leg_mode, pigpio.OUTPUT)
+        self.pi.write(self.gpioPin_2_leg_mode, 0)
+        self.pi.set_mode(self.gpioPin_3_leg_mode, pigpio.OUTPUT)
+        self.pi.write(self.gpioPin_3_leg_mode, 0)
 
-        GPIO.setup(self.gpioPin_SabertoothS2, GPIO.OUT)
-        # channel=(pin_SabertoothS2) frequency=50Hz
-        self.sabertoothS2 = GPIO.PWM(self.gpioPin_SabertoothS2, 50)
-        self.sabertoothS2.start(7.5)
+        self.pi.set_mode(self.gpioPin_Syren10, pigpio.OUTPUT)
+        self.pi.set_servo_pulsewidth(self.gpioPin_Syren10, 0)
 
-        GPIO.setup(self.gpioPin_Syren10, GPIO.OUT)
-        # channel=(pin_Syren10) frequency=50Hz
-        self.syren10 = GPIO.PWM(self.gpioPin_Syren10, 50)
-        self.syren10.start(7.5)
+        self.pi.set_mode(self.gpioPin_SabertoothS1, pigpio.OUTPUT)
+        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS1, 0)
+
+        self.pi.set_mode(self.gpioPin_SabertoothS2, pigpio.OUTPUT)
+        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS2, 0)
 
         self.initializeXboxController()
         self.initializeSoundController()
@@ -285,7 +286,6 @@ class R2PY:
             if(self.lbValue == 1):
                 self.peekabooCtrlr.stop()
 
-
     def yButton(self, value):
         print("yButton = {}".format(value))
         if value == 1:
@@ -314,15 +314,15 @@ class R2PY:
         # up
         if((self.dpadValue == (0,-1)) & (self.lbValue == 1)):
             print("3 legged mode started")
-            GPIO.output(self.gpioPin_3_leg_mode, GPIO.HIGH)
+            self.pi.write(self.gpioPin_3_leg_mode, 1)
             sleep(0.1)
-            GPIO.output(self.gpioPin_3_leg_mode, GPIO.LOW)
+            self.pi.write(self.gpioPin_3_leg_mode, 0)
         # down
         elif((self.dpadValue == (0,1)) & (self.lbValue == 1)):
             print("2 legged mode started")
-            GPIO.output(self.gpioPin_2_leg_mode, GPIO.HIGH)
+            self.pi.write(self.gpioPin_2_leg_mode, 1)
             sleep(0.1)
-            GPIO.output(self.gpioPin_2_leg_mode, GPIO.LOW)
+            self.pi.write(self.gpioPin_2_leg_mode, 0)
 
     def updateDome(self):
         # debug
@@ -341,26 +341,19 @@ class R2PY:
         # i.e. if i push left, motor should be spinning left
         #      if i push right, motor should be spinning right
 
-        dutyCycleSyren10 = self.translate(x1, -1, 1, 5, 10)
+        # assuming RC, then you need to generate pulses about 50 times per second
+        # where the actual width of the pulse controls the speed of the motors,
+        # with a pulse width of about 1500 is stopped
+        # and somewhere around 1000 is full reverse and 2000 is full forward.
+        dutyCycleSyren10 = self.translate(x1, -1, 1, 1000, 2000)
 
         # debug
         print("---------------------")
         print("dutyCycleSyren10 {}".format(dutyCycleSyren10))
         print("---------------------")
 
-        # assuming RC, then you need to generate pulses about 50 times per second
-        # where the actual width of the pulse controls the speed of the motors,
-        # with a pulse width of about 1500 is stopped
-        # and somewhere around 1000 is full reverse and 2000 is full forward.
+        self.pi.set_servo_pulsewidth(self.gpioPin_Syren10, dutyCycleSyren10)
 
-        # if the power is 0 stop the motors
-        # if powerA == 0 and powerB == 0:
-        #    sabertoothS1.stop()
-        #    sabertoothS2.stop()
-        # otherwise start them up
-        # else:
-        self.syren10.ChangeDutyCycle(dutyCycleSyren10)
-        # sleep(0.1)
 
     def updateFeet(self):
         # debug
@@ -372,31 +365,26 @@ class R2PY:
 
         left, right = self.steering(self.xValueLeft, self.yValueLeft)
 
-        self.dutyCycleS1 = self.translate(left, -1, 1, 5, 10)
-        self.dutyCycleS2 = self.translate(right, -1, 1, 5, 10)
-
-        # debug
-        print("dutyCycleS1 {}".format(self.dutyCycleS1))
-        print("dutyCycleS2 {}".format(self.dutyCycleS2))
-        print("")
-
         # assuming RC, then you need to generate pulses about 50 times per second
         # where the actual width of the pulse controls the speed of the motors,
         # with a pulse width of about 1500 is stopped
         # and somewhere around 1000 is full reverse and 2000 is full forward.
+        dutyCycleS1 = self.translate(left, -1, 1, 1000, 2000)
+        dutyCycleS2 = self.translate(right, -1, 1, 1000, 2000)
 
-        # if the power is 0 stop the motors
-        # if powerA == 0 and powerB == 0:
-        #    sabertoothS1.stop()
-        #    sabertoothS2.stop()
-        # otherwise start them up
-        # else:
-        self.sabertoothS1.ChangeDutyCycle(self.dutyCycleS1)
-        self.sabertoothS2.ChangeDutyCycle(self.dutyCycleS2)
-        # sleep(0.1)
+        # debug
+        print("---------------------")
+        print("dutyCycleS1 {}".format(dutyCycleS1))
+        print("dutyCycleS2 {}".format(dutyCycleS2))
+        print("---------------------")
+
+        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS1, dutyCycleS1)
+        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS2, dutyCycleS2)
 
     def stop(self):
-        GPIO.cleanup()
+        self.pi.set_servo_pulsewidth(self.gpioPin_Syren10, 0)
+        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS1, 0)
+        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS2, 0)
         self.xboxCtrlr.stop()
         self.peekabooCtrlr.stop()
         self.peekabooCtrlr.stopVideo()
