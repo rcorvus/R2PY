@@ -32,7 +32,7 @@ Xbox 360 Joystick/Controller (the Microsoft brand only costs a little more than 
 
 Xbox 360 Wireless Receiver (the Microsoft brand only costs a little more than the knockoff and never has any problems) 
 
-Marcduino system for controlling the lights, holos, and servos in R2's head. (instructions are on curiousmarc.com)
+Marcduino system for controlling the lights, holos, and servos in R2's head (instructions are on curiousmarc.com)
 
 ## Optional  
 ### 2-3-2 Transition  
