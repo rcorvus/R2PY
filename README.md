@@ -7,7 +7,7 @@ The R2PY system includes Xbox360 joystick controller support for driving the tan
 
 R2PY also has a "peekaboo" system that uses machine learning to see through a USB camera or PiCamera and detects human faces.  If the droid doesn't see anyone, it coos worriedly a couple times, and when it spots someone it whistles excitedly.  
 
-The AI can also identify which way the person so it can be wired up to the head for tracking.  
+The AI can also identify which way the person is moving so it can be wired up to the head for tracking.  
 
 Output from the camera is shown on a HDMI connected touchscreen with bounding boxes around the detected face.  
 
