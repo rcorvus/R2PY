@@ -2,110 +2,6 @@
 # version 1.0
 # by Robert Corvus
 
-# NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
-
-# to start:  press "Activate R2-D2" in Raspberry Pi menu
-
-# Control with Xbox controller:
-# Use left stick for controlling driving around
-# Use right stick for looking around (i.e. turning his dome left and right)
-
-# Configuration, Installation, and Setup notes:
-
-# copy all files and folders (and unzip sounds) to /home/pi
-
-# be sure to run "chmod +x run_r2.sh" to make run_r2.sh executable
-# if you edit run_r2.sh in the text editor, be sure to run "dos2unix run_r2.sh" to fix the carriage returns
-
-# in Main Menu Editor, create a new menu named ActivateR2D2.desktop in the Applications folder on the Raspberry Pi so you have a clickable icon to start R2:
-# and copy/paste the contents of ActivateR2D2.desktop into this and save
-# you will see the icon in the Applications menu
-
-# if running this inside a python virtual environment,
-# you'll need to run "pip install pygame" to get the version of pygame that goes with the version of python in the environ
-
-# install xboxdrv driver on raspi with:
-# sudo apt-get install xboxdrv
-
-# add this to sudo nano /etc/rc.local and ctrl-o, enter, ctrl-x to save:
-# xboxdrv --daemon --silent &
-
-# if you need to terminate xboxdrv:
-# ps aux | grep xboxdrv (to get its pid)
-# sudo kill -TERM [put-your-pid-here]
-# sudo kill -KILL [put-your-pid-here]
-
-# to output sound to the 3mm audio jack:
-# sudo amixer cset numid=3 1
-
-# to output sound to the HDMI audio
-# sudo amixer cset numid=3 2
-
-# (from https://www.waveshare.com/w/upload/1/19/7inch_HDMI_LCD_%28B%29_User_Manual.pdf):
-# To configure 7 inch LCD monitor, run "sudo nano /boot/config.txt" and add this to the bottom:
-# max_usb_current=1
-# hdmi_group=2
-# hdmi_mode=87
-# hdmi_cvt 800 480 60 6 0 0 0
-# hdmi_drive=1
-
-# (and if you need to rotate the screen to vertical, add this too:
-# display_rotate=1
-# these are the options: display_rotate=1 #1: 90; 2: 180; 3: 270
-
-# if you need to rotate the touchscreen to vertical, then:
-# sudo apt-get install xserver-xorg-input-libinput
-# sudo mkdir /etc/X11/xorg.conf.d
-# sudo cp /usr/share/X11/xorg.conf.d/40-libinput.conf /etc/X11/xorg.conf.d/
-# sudo nano /etc/X11/xorg.conf.d/40-libinput.conf
-
-# and change this section:
-# Section "InputClass"
-#         Identifier "libinput touchscreen catchall"
-#         MatchIsTouchscreen "on"
-#         Option "CalibrationMatrix" "0 1 0 -1 0 1 0 0 1"
-#         MatchDevicePath "/dev/input/event*"
-#         Driver "libinput"
-# EndSection
-
-# these are the options for rotation:
-# 90 degree: Option "CalibrationMatrix" "0 1 0 -1 0 1 0 0 1"
-# 180 degree: Option "CalibrationMatrix" "-1 0 1 0 -1 1 0 0 1"
-# 270 degree: Option "CalibrationMatrix" "0 -1 1 1 0 0 0 0 1"
-
-
-# Wiring:
-# The Raspberry Pi GPIO are all set as INPUTS at power-up.
-# GPIO 0-8 have pull-ups to 3V3 applied as a default.
-# GPIO 9-27 have pull-downs to ground applied as a default.
-# This means that GPIO 0-8 will probably be seen as high and GPIO 9-27 will probably be seen as low.
-# You want to use GPIO > 8 or else your Arduino will be triggered when you power on the RPi
-# because any GPIO < 9 will be set to high until you run R2PY
-# but check the schematics for your version of Raspberry Pi
-
-# run this for motor control
-# pip install pysabertooth
-
-# The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1
-# The USB Control Sabertooth2x32 dip switches should be (0 is off, 1 is on):  1 0 1 1 1 1
-
-# setup pigpio:
-# if virtual environment, need to copy your pigpio.py and pigpio-1.42.dist-info folder
-# from /usr/local/lib/python3.5/dist-packages
-# to /home/pi/.virtualenvs/py3cv3/lib/python3.5/site-packages
-# then while running virtual environment:
-# sudo apt-get install pigpio
-# then to start the pigpiod daemon on system boot run this:
-# sudo systemctl enable pigpiod
-# sudo systemctl start pigpiod
-
-# to remote into raspberry pi
-# sudo apt-get install xrdp
-
-# TODO: I was trying to get it to start at system boot with this, but not working maybe because of imshow?
-# "sudo crontab -e" and this line:
-# @reboot /home/pi/run_r2.sh
-
 import sys
 import pigpio
 from pysabertooth import Sabertooth
@@ -120,7 +16,7 @@ class R2PY:
 
     def __init__(self):
         # if you want to switch to hardware PWM, remember:
-        # GPIO12(32) & GPIO18(12) share a setting as do GPIO13(33) & GPIO19(35)
+        # GPIO12(Board 32) & GPIO18(Board 12) share a setting as do GPIO13(Board 33) & GPIO19(Board 35)
 
         # NOTE: all gpio pin numbers are BCM
         self.gpioPin_SabertoothS1 = 18
