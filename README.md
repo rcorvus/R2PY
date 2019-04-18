@@ -205,7 +205,8 @@ GPIO 0-8 have pull-ups to 3V3 applied as a default.
 GPIO 9-27 have pull-downs to ground applied as a default.
 This means that GPIO 0-8 will probably be seen as high and GPIO 9-27 will probably be seen as low.
 You want to use GPIO > 8 or else your Arduino will be triggered when you power on the RPi
-because any GPIO < 9 will be set to high until you run R2PY
+because any GPIO < 9 will be set to high until you run R2PY  
+
 but check the schematics for your version of Raspberry Pi
 
 Run this for motor control  
@@ -213,8 +214,8 @@ Run this for motor control
 pip install pysabertooth
 ```
 
-The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1
-The USB Control Sabertooth2x32 dip switches should be (0 is off, 1 is on):  1 0 1 1 1 1
+The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1  
+The USB Control Sabertooth2x32 dip switches should be (0 is off, 1 is on):  1 0 1 1 1 1  
 
 ### Setup pigpio
 If virtual environment, need to copy your pigpio.py and pigpio-1.42.dist-info folder
