@@ -195,7 +195,7 @@ These are the options for rotation:
 270 degree: Option "CalibrationMatrix" "0 -1 1 1 0 0 0 0 1"
 
 
-## Wiring
+### Wiring
 The Raspberry Pi GPIO are all set as INPUTS at power-up.
 GPIO 0-8 have pull-ups to 3V3 applied as a default.
 GPIO 9-27 have pull-downs to ground applied as a default.
@@ -212,7 +212,7 @@ pip install pysabertooth
 The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1
 The USB Control Sabertooth2x32 dip switches should be (0 is off, 1 is on):  1 0 1 1 1 1
 
-## Setup pigpio
+### Setup pigpio
 If virtual environment, need to copy your pigpio.py and pigpio-1.42.dist-info folder
 from /usr/local/lib/python3.5/dist-packages
 to /home/pi/.virtualenvs/py3cv3/lib/python3.5/site-packages
@@ -225,7 +225,7 @@ then to start the pigpiod daemon on system boot run this:
 sudo systemctl enable pigpiod
 sudo systemctl start pigpiod
 ```
-
+### Miscellaneous  
 To remote into raspberry pi
 ```sudo apt-get install xrdp```
 
