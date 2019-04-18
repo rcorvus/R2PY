@@ -66,19 +66,15 @@ Additional setup instructions are in each of the code files.
 |M1	|1 (Positive)|
 |M2	|2 (Negative)|
 
-### Connecting the Raspberry Pi to the Sabertooth 2x25 (2x12) and foot motors
-|Sabertooth (2x25 or 2x12)	|RaspberryPi3|
-| --- | --- |  
-|S1	|3|
-|S2	|5|
-|0v	|GND|
+### Connecting the Raspberry Pi to the Sabertooth 2x32 (USB) and foot motors
+Connect the USB cable from the Raspberry Pi to the Sabertooth 2x32
 
-|Sabertooth (2x25 or 2x12)	|Battery|
+|Sabertooth (2x32)	|Battery|
 | --- | --- |  
 |B+	|Positive|
 |B-	|Negative|
 
-|Sabertooth (2x25 or 2x12)	|Foot Motors|
+|Sabertooth (2x32)	|Foot Motors|
 | --- | --- |  
 |M1A	Right Motor Terminal    |1|
 |M1B	Right Motor Terminal    |2|
@@ -106,7 +102,9 @@ https://www.pololu.com/docs/0J38/all
 In order to get the Peekaboo system working, you'll need to configure OpenCV on your Raspberry Pi.  Here are [extremely good instructions](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/) on how to install everything you need, but even better if you buy his [Practical Python And OpenCV QuickStart bundle](https://www.pyimagesearch.com/practical-python-opencv/), he gives you a Raspberry Pi image file preconfigured with everything you need.  To me, that was worth $100 in time savings right there, and his tutorials are great too.  
 
 ### Acknowledgements
-Many thanks for the Sabertooth and Syren hardware configuration adapted from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code adapted from martinohanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup adapted from jrosebr (which I made several modifications).
+Many thanks for the Sabertooth and Syren hardware configuration adapted from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code adapted from martinohanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup adapted from jrosebr (which I made several modifications).   
+
+Unending thanks to everyone who contributed to all the open source libraries used in this project!
 
 Let me know if you have any trouble with this system or if you have trouble submitting pull requests.  
 
