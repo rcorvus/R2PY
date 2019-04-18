@@ -124,7 +124,10 @@ and copy/paste the contents of ActivateR2D2.desktop into this and save
 you will see the icon in the Applications menu
 
 If running this inside a python virtual environment,
-yu'll need to run "pip install pygame" to get the version of pygame that goes with the version of python in the environ
+you'll need to run this to get the version of pygame that goes with the version of python in the environ
+```
+pip install pygame
+```
 
 Install xboxdrv driver on raspi with  
 ```
