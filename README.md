@@ -126,47 +126,61 @@ you will see the icon in the Applications menu
 If running this inside a python virtual environment,
 yu'll need to run "pip install pygame" to get the version of pygame that goes with the version of python in the environ
 
-Install xboxdrv driver on raspi with
-```sudo apt-get install xboxdrv```
+Install xboxdrv driver on raspi with  
+```
+sudo apt-get install xboxdrv
+```
 
 
-### add this to sudo nano /etc/rc.local and ctrl-o, enter, ctrl-x to save
-```xboxdrv --daemon --silent &```
+### add this to sudo nano /etc/rc.local and ctrl-o, enter, ctrl-x to save  
+```
+xboxdrv --daemon --silent &
+```
 
-If you need to terminate xboxdrv:
-```ps aux | grep xboxdrv (to get its pid)
+If you need to terminate xboxdrv  
+```
+ps aux | grep xboxdrv (to get its pid)
 sudo kill -TERM [put-your-pid-here]
 sudo kill -KILL [put-your-pid-here]
 ```
 
-To output sound to the 3mm audio jack:
-```sudo amixer cset numid=3 1```
+To output sound to the 3mm audio jack  
+```
+sudo amixer cset numid=3 1
+```
 
-To output sound to the HDMI audio
-```sudo amixer cset numid=3 2```
+To output sound to the HDMI audio  
+```
+sudo amixer cset numid=3 2
+```
 
 (from https://www.waveshare.com/w/upload/1/19/7inch_HDMI_LCD_%28B%29_User_Manual.pdf):
-To configure 7 inch LCD monitor, run "sudo nano /boot/config.txt" and add this to the bottom:
-```max_usb_current=1
+To configure 7 inch LCD monitor, run "sudo nano /boot/config.txt" and add this to the bottom:  
+```
+max_usb_current=1
 hdmi_group=2
 hdmi_mode=87
 hdmi_cvt 800 480 60 6 0 0 0
 hdmi_drive=1
 ```
 
-(and if you need to rotate the screen to vertical, add this too:
-```display_rotate=1```
-These are the options: display_rotate=1 #1: 90; 2: 180; 3: 270
+(and if you need to rotate the screen to vertical, add this too:  
+```
+display_rotate=1
+```
+These are the options: display_rotate=1 #1: 90; 2: 180; 3: 270  
 
-If you need to rotate the touchscreen to vertical, then:
-```sudo apt-get install xserver-xorg-input-libinput
+If you need to rotate the touchscreen to vertical, then:  
+```
+sudo apt-get install xserver-xorg-input-libinput
 sudo mkdir /etc/X11/xorg.conf.d
 sudo cp /usr/share/X11/xorg.conf.d/40-libinput.conf /etc/X11/xorg.conf.d/
 sudo nano /etc/X11/xorg.conf.d/40-libinput.conf
 ```
 
-And change this section:
-```Section "InputClass"
+And change this section:  
+```
+Section "InputClass"
          Identifier "libinput touchscreen catchall"
          MatchIsTouchscreen "on"
          Option "CalibrationMatrix" "0 1 0 -1 0 1 0 0 1"
@@ -190,8 +204,10 @@ You want to use GPIO > 8 or else your Arduino will be triggered when you power o
 because any GPIO < 9 will be set to high until you run R2PY
 but check the schematics for your version of Raspberry Pi
 
-Run this for motor control
-```pip install pysabertooth```
+Run this for motor control  
+```
+pip install pysabertooth
+```
 
 The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1
 The USB Control Sabertooth2x32 dip switches should be (0 is off, 1 is on):  1 0 1 1 1 1
@@ -200,18 +216,22 @@ The USB Control Sabertooth2x32 dip switches should be (0 is off, 1 is on):  1 0 
 If virtual environment, need to copy your pigpio.py and pigpio-1.42.dist-info folder
 from /usr/local/lib/python3.5/dist-packages
 to /home/pi/.virtualenvs/py3cv3/lib/python3.5/site-packages
-then while running virtual environment:
-```sudo apt-get install pigpio```
-then to start the pigpiod daemon on system boot run this:
-```sudo systemctl enable pigpiod
+then while running virtual environment:  
+```
+sudo apt-get install pigpio
+```
+then to start the pigpiod daemon on system boot run this:  
+```
+sudo systemctl enable pigpiod
 sudo systemctl start pigpiod
 ```
 
 To remote into raspberry pi
 ```sudo apt-get install xrdp```
 
-TODO: I was trying to get it to start at system boot with this, but not working maybe because of imshow?
-```"sudo crontab -e" and this line:
+TODO: I was trying to get it to start at system boot with this, but not working maybe because of imshow?  
+``` 
+"sudo crontab -e" and this line:
 @reboot /home/pi/run_r2.sh
 ```
 
