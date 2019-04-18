@@ -7,7 +7,16 @@ The R2PY system includes Xbox360 joystick controller support for driving the foo
 
 R2PY also has a "peekaboo" system that uses machine learning to see through a USB camera or PiCamera and detects human faces.  If the droid doesn't see anyone, it coos worriedly a couple times, and when it spots someone it whistles excitedly.  Output from the camera is shown on a HDMI connected touchscreen with bounding boxes around the detected face.  
 
-Optionally if you want a 2-3-2 transition system, included is the Arduino Nano code and hardware setup needed.  
+Optionally if you want a 2-3-2 transition system, included is the Arduino Nano code and hardware setup needed. 
+
+## Running R2.PY
+NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
+
+To start:  press "Activate R2-D2" in Raspberry Pi menu
+
+## Control with Xbox controller
+Use left stick for controlling driving around
+Use right stick for looking around (i.e. turning his dome left and right)
 
 ## Hardware Requirements  
 
@@ -101,15 +110,6 @@ https://www.pololu.com/docs/0J38/all
 
 In order to get the Peekaboo system working, you'll need to configure OpenCV on your Raspberry Pi.  Here are [extremely good instructions](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/) on how to install everything you need, but even better if you buy his [Practical Python And OpenCV QuickStart bundle](https://www.pyimagesearch.com/practical-python-opencv/), he gives you a Raspberry Pi image file preconfigured with everything you need.  To me, that was worth $100 in time savings right there, and his tutorials are great too.  
 
-## Running R2.PY
-NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
-
-To start:  press "Activate R2-D2" in Raspberry Pi menu
-
-## Control with Xbox controller
-Use left stick for controlling driving around
-Use right stick for looking around (i.e. turning his dome left and right)
-
 ## Configuration, Installation, and Setup notes
 
 Copy all files and folders (and unzip sounds) to /home/pi
@@ -137,7 +137,7 @@ sudo kill -TERM [put-your-pid-here]
 sudo kill -KILL [put-your-pid-here]
 ```
 
-TRo output sound to the 3mm audio jack:
+To output sound to the 3mm audio jack:
 ```sudo amixer cset numid=3 1```
 
 To output sound to the HDMI audio
