@@ -5,9 +5,13 @@ This control system for a three legged droid runs on a Raspbery Pi 3 and is writ
 
 The R2PY system includes Xbox360 joystick controller support for driving the tank style (differential) foot motors, turning the dome head, generating onboard sounds, and mixing sounds from other sources (such as Marcduino).  
 
-R2PY also has a "peekaboo" system that uses machine learning to see through a USB camera or PiCamera and detects human faces.  If the droid doesn't see anyone, it coos worriedly a couple times, and when it spots someone it whistles excitedly.  Output from the camera is shown on a HDMI connected touchscreen with bounding boxes around the detected face.  
+R2PY also has a "peekaboo" system that uses machine learning to see through a USB camera or PiCamera and detects human faces.  If the droid doesn't see anyone, it coos worriedly a couple times, and when it spots someone it whistles excitedly.  
 
-Optionally if you want a 2-3-2 transition system, included is the Arduino Nano code and hardware setup needed. 
+The AI can also identify which way the person so it can be wired up to the head for tracking.  
+
+Output from the camera is shown on a HDMI connected touchscreen with bounding boxes around the detected face.  
+
+Optionally if you want a 2-3-2 transition system (from 2 legged to 3 legged and back), included is the Arduino Nano code and hardware setup needed. 
 
 ## Running R2.PY
 NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
@@ -233,6 +237,7 @@ sudo systemctl start pigpiod
 ### Miscellaneous  
 To remote into raspberry pi
 ```sudo apt-get install xrdp```
+TODO: callback from Peekaboo to turn dome to track person in frame.  
 
 TODO: I was trying to get it to start at system boot with this, but not working maybe because of imshow?  
 ``` 
