@@ -1,13 +1,25 @@
-# ./run_r2.sh
+# R2.py
+# version 1.0
+# by Robert Corvus
 
-# be sure to run "chmod +x run_r2.sh" to make it executable
+# NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
+
+# to start:  press "Activate R2-D2" in Raspberry Pi menu
+
+# Control with Xbox controller:
+# Use left stick for controlling driving around
+# Use right stick for looking around (i.e. turning his dome left and right)
+
+# Configuration, Installation, and Setup notes:
+
+# copy all files and folders (and unzip sounds) to /home/pi
+
+# be sure to run "chmod +x run_r2.sh" to make run_r2.sh executable
 # if you edit run_r2.sh in the text editor, be sure to run "dos2unix run_r2.sh" to fix the carriage returns
 
 # in Main Menu Editor, create a new menu named ActivateR2D2.desktop in the Applications folder on the Raspberry Pi so you have a clickable icon to start R2:
 # and copy/paste the contents of ActivateR2D2.desktop into this and save
 # you will see the icon in the Applications menu
-
-# NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
 
 # if running this inside a python virtual environment,
 # you'll need to run "pip install pygame" to get the version of pygame that goes with the version of python in the environ
@@ -61,23 +73,21 @@
 # 180 degree: Option "CalibrationMatrix" "-1 0 1 0 -1 1 0 0 1"
 # 270 degree: Option "CalibrationMatrix" "0 -1 1 1 0 0 0 0 1"
 
-# to remote into raspberry pi
-# sudo apt-get install xrdp
-
-# Control with Xbox controller:
-# Use left stick for controlling driving around
-# Use right stick for looking around (i.e. turning his dome left and right)
 
 # Wiring:
-# The Pi GPIO are all set as INPUTS at power-up.
+# The Raspberry Pi GPIO are all set as INPUTS at power-up.
 # GPIO 0-8 have pull-ups to 3V3 applied as a default.
 # GPIO 9-27 have pull-downs to ground applied as a default.
 # This means that GPIO 0-8 will probably be seen as high and GPIO 9-27 will probably be seen as low.
 # You want to use GPIO > 8 or else your Arduino will be triggered when you power on the RPi
 # because any GPIO < 9 will be set to high until you run R2PY
+# but check the schematics for your version of Raspberry Pi
+
+# run this for motor control
+# pip install pysabertooth
 
 # The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1
-# The Sabertooth2x25 dip switches should be (0 is off, 1 is on):  0 1 0 0 1 1
+# The USB Control Sabertooth2x32 dip switches should be (0 is off, 1 is on):  1 0 1 1 1 1
 
 # setup pigpio:
 # if virtual environment, need to copy your pigpio.py and pigpio-1.42.dist-info folder
@@ -89,12 +99,16 @@
 # sudo systemctl enable pigpiod
 # sudo systemctl start pigpiod
 
+# to remote into raspberry pi
+# sudo apt-get install xrdp
+
 # TODO: I was trying to get it to start at system boot with this, but not working maybe because of imshow?
 # "sudo crontab -e" and this line:
 # @reboot /home/pi/run_r2.sh
 
 import sys
 import pigpio
+from pysabertooth import Sabertooth
 import math
 from time import sleep
 import pygame
@@ -127,13 +141,9 @@ class R2PY:
         self.pi.set_PWM_frequency(self.gpioPin_Syren10, 50)
         self.pi.set_servo_pulsewidth(self.gpioPin_Syren10, 0)
 
-        self.pi.set_mode(self.gpioPin_SabertoothS1, pigpio.OUTPUT)
-        # self.pi.set_PWM_frequency(self.gpioPin_SabertoothS1, 50)
-        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS1, 0)
-
-        self.pi.set_mode(self.gpioPin_SabertoothS2, pigpio.OUTPUT)
-        # self.pi.set_PWM_frequency(self.gpioPin_SabertoothS2, 50)
-        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS2, 0)
+        # to find the usb port of the sabertooth run this: cd /dev
+        # and ls to see the list of usb ports, then plug in your usb to the sabertooth and ls again to see the new port
+        self.saber = Sabertooth('/dev/ttyACM0', baudrate=115200, address=128, timeout=0.1)
 
         self.initializeXboxController()
         self.initializeSoundController()
@@ -365,12 +375,8 @@ class R2PY:
 
         left, right = self.steering(self.xValueLeft, self.yValueLeft)
 
-        # assuming RC, then you need to generate pulses about 50 times per second
-        # where the actual width of the pulse controls the speed of the motors,
-        # with a pulse width of about 1500 is stopped
-        # and somewhere around 1000 is full reverse and 2000 is full forward.
-        dutyCycleS1 = self.translate(left, -1, 1, 1000, 2000)
-        dutyCycleS2 = self.translate(right, -1, 1, 1000, 2000)
+        dutyCycleS1 = self.translate(left, -1, 1, -100, 100)
+        dutyCycleS2 = self.translate(right, -1, 1, -100, 100)
 
         # debug
         print("---------------------")
@@ -378,13 +384,15 @@ class R2PY:
         print("dutyCycleS2 {}".format(dutyCycleS2))
         print("---------------------")
 
-        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS1, dutyCycleS1)
-        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS2, dutyCycleS2)
+        # drive(number, speed)
+        # number: 1-2
+        # speed: -100 - 100
+        self.saber.drive(1, dutyCycleS1)
+        self.saber.drive(2, dutyCycleS2)
 
     def stop(self):
         self.pi.set_servo_pulsewidth(self.gpioPin_Syren10, 0)
-        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS1, 0)
-        self.pi.set_servo_pulsewidth(self.gpioPin_SabertoothS2, 0)
+        saber.stop()
         self.xboxCtrlr.stop()
         self.peekabooCtrlr.stop()
         self.peekabooCtrlr.stopVideo()
