@@ -238,7 +238,7 @@ and this line
 @reboot /home/pi/run_r2.sh
 ```
 
-### Acknowledgements
+## Acknowledgements
 Many thanks for the Sabertooth and Syren hardware configuration adapted from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code adapted from martinohanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup adapted from jrosebr (which I made several modifications).   
 
 Unending thanks to everyone who contributed to all the open source libraries used in this project!
