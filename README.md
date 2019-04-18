@@ -15,7 +15,7 @@ Raspberry Pi 3
 
 12v DC 5v Micro-USB power regulator to power your Raspberry Pi from 12v DC battery system - something like this: https://www.amazon.com/gp/product/B00U2DGJD2 
 
-Foot motor controllers: Sabertooth 2x25 (or 2x12 if styrene or 3D printed body) (for controlling the foot motors)  
+Foot motor controllers: Sabertooth 2x32 with USB control (for controlling the foot motors)  
 
 Dome motor controller:  Syren 10 (for controlling the dome motor)  
 
