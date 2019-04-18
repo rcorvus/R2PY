@@ -231,7 +231,10 @@ To remote into raspberry pi
 
 TODO: I was trying to get it to start at system boot with this, but not working maybe because of imshow?  
 ``` 
-"sudo crontab -e" and this line:
+sudo crontab -e
+```
+and this line  
+```
 @reboot /home/pi/run_r2.sh
 ```
 
