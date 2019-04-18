@@ -123,6 +123,7 @@ In Main Menu Editor, create a new menu named ActivateR2D2.desktop in the Applica
 and copy/paste the contents of ActivateR2D2.desktop into this and save
 you will see the icon in the Applications menu
 
+### Xbox controller setup
 If running this inside a python virtual environment,
 you'll need to run this to get the version of pygame that goes with the version of python in the environ
 ```
@@ -134,8 +135,7 @@ Install xboxdrv driver on raspi with
 sudo apt-get install xboxdrv
 ```
 
-
-### add this to sudo nano /etc/rc.local and ctrl-o, enter, ctrl-x to save  
+Add this to sudo nano /etc/rc.local and ctrl-o, enter, ctrl-x to save  
 ```
 xboxdrv --daemon --silent &
 ```
@@ -146,7 +146,7 @@ ps aux | grep xboxdrv (to get its pid)
 sudo kill -TERM [put-your-pid-here]
 sudo kill -KILL [put-your-pid-here]
 ```
-
+### Sound setup
 To output sound to the 3mm audio jack  
 ```
 sudo amixer cset numid=3 1
@@ -157,6 +157,7 @@ To output sound to the HDMI audio
 sudo amixer cset numid=3 2
 ```
 
+### Touchscreen monitor setup
 (from https://www.waveshare.com/w/upload/1/19/7inch_HDMI_LCD_%28B%29_User_Manual.pdf):
 To configure 7 inch LCD monitor, run "sudo nano /boot/config.txt" and add this to the bottom:  
 ```
