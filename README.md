@@ -252,7 +252,7 @@ and this line
 ```
 
 ## Acknowledgements
-Many thanks for the members of Astromech.net for all they have taught me over the years!  More thanks for the Sabertooth and Syren hardware configuration adapted from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code adapted from martinohanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup adapted from jrosebr (which I made several modifications).   
+Many thanks for the members of Astromech.net for all they have taught me over the years!  More thanks for the Sabertooth and Syren hardware configuration adapted from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code adapted from martinohanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup adapted from jrosebr (which I made several modifications).  If you want to know more about how the face recognition works, you'll want to buy his training course on pyimagesearch.com.   
 
 Unending thanks to everyone who contributed to all the open source libraries used in this project!
 
