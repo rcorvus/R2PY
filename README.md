@@ -240,7 +240,7 @@ To remote into raspberry pi
 sudo apt-get install xrdp
 ```
 
-TODO: callback from Peekaboo to turn dome to track person in frame.  
+TODO: callback from Peekaboo thread to turn dome to track person in frame.  
 
 TODO: I was trying to get it to start at system boot with this, but not working maybe because of imshow?  
 ``` 
