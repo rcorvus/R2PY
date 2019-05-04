@@ -27,6 +27,7 @@ class PeekabooController(threading.Thread):
         self.whereIsEveryoneFlag = False
         self.iSeeSomeoneFlag = False
         self.failure = False
+        self.record = False
 
     def initVideo(self):
         try:
@@ -61,6 +62,14 @@ class PeekabooController(threading.Thread):
     #called by the thread
     def run(self):
         self._start()
+
+    def toggleRecord(self):
+        if(self.record == True):
+            self.record = False
+            print("video recording stopped")
+        else:
+            self.record = True
+            print("video recording started")
 
     # start looking
     def _start(self):
@@ -137,15 +146,16 @@ class PeekabooController(threading.Thread):
                 cv2.imshow("Face", frameClone)
 
                 # write video to file
-                if self.writer is None:
-                    # store the image dimensions, initialize the video writer,
-                    # and construct the zeros array
-                    (h, w) = frameClone.shape[:2]
-                    self.writer = cv2.VideoWriter("test.avi", self.fourcc, 4,
-                                                  (w, h), True)
-                output = np.zeros((h, w, 3), dtype="uint8")
-                output[0:h, 0:w] = frameClone
-                self.writer.write(output)
+                if self.record == True:
+                    if self.writer is None:
+                        # store the image dimensions, initialize the video writer,
+                        # and construct the zeros array
+                        (h, w) = frameClone.shape[:2]
+                        self.writer = cv2.VideoWriter("r2_recording.avi", self.fourcc, 4,
+                                                      (w, h), True)
+                    output = np.zeros((h, w, 3), dtype="uint8")
+                    output[0:h, 0:w] = frameClone
+                    self.writer.write(output)
 
                 # NOTE: comment this out if you don't want the video stream window to show in terminal
                 # if the 'q' key is pressed, stop the loop

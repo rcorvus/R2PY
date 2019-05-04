@@ -2,6 +2,19 @@
 # version 1.0
 # by Robert Corvus
 
+
+# TODO:
+# - Change `source /home/pi/.virtualenvs` -> `source ~/virtualenvwrapper.sh`
+# - Change `workon start_py3cv3` -> `workon py3cv3` (since py3cv3 is the actual name of the environment while `start_py3cv3 is just a script used to activate the environment)
+#
+# Regarding your 2nd e-mail, did you update contrab properly as shown in the blog post? If yes, then can you double check if the path provided for the `on_reboot.sh` script is correct? Additionally, have you removed the lines that output the frame to the display (lines that use the cv2.imshow method)? If not, please do this since the contrab method runs in the background and it's not possible to use cv2.imshow in this case.
+#
+# Also, if you want to use `cv2.imshow` in your python script then you can check this comment by one of our reader who was able to get it working:
+# - https://www.pyimagesearch.com/2016/05/16/running-a-python-opencv-script-on-reboot/#comment-490202
+
+
+
+
 import sys
 import pigpio
 from pysabertooth import Sabertooth
@@ -176,6 +189,8 @@ class R2PY:
 
     def aButton(self, value):
         print("aButton = {}".format(value))
+        if ((value == 1) & (self.lbValue == 1)):
+            PeekabooController.toggleRecord()
         if value == 1:
             self.annoyed()
 
