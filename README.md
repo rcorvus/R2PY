@@ -3,11 +3,15 @@
 
 This control system for a three legged droid runs on a Raspbery Pi 3 and is written in Python 3.6.  
 
-The R2PY system includes Xbox360 joystick controller support for driving the foot motors, turning the dome head, generating onboard sounds, and mixing sounds from other sources (such as Marcduino).  
+The R2PY system includes Xbox360 joystick controller support for driving the tank style (differential) foot motors, turning the dome head, generating onboard sounds, and mixing sounds from other sources (such as Marcduino).  
 
-R2PY also has a "peekaboo" system that uses machine learning to see through a USB camera or PiCamera and detects human faces.  If the droid doesn't see anyone, it coos worriedly a couple times, and when it spots someone it whistles excitedly.  Output from the camera is shown on a HDMI connected touchscreen with bounding boxes around the detected face.  
+R2PY also has a "peekaboo" system that uses machine learning to see through a USB camera or PiCamera and detects human faces.  If the droid doesn't see anyone, it coos worriedly a couple times, and when it spots someone it whistles excitedly.  
 
-Optionally if you want a 2-3-2 transition system, included is the Arduino Nano code and hardware setup needed. 
+The AI can also identify which way the person is moving so it can be wired up to the head for tracking.  
+
+Output from the camera is shown on a HDMI connected touchscreen with bounding boxes around the detected face.  
+
+Optionally if you want a 2-3-2 transition system (from 2 legged to 3 legged and back), included is the Arduino Nano code and hardware setup needed. 
 
 ## Running R2.PY
 NOTE: you'll need to turn on your Xbox controller and make sure it binds to the XboxController running on your Raspberry Pi before you run R2.py
@@ -123,16 +127,19 @@ In Main Menu Editor, create a new menu named ActivateR2D2.desktop in the Applica
 and copy/paste the contents of ActivateR2D2.desktop into this and save
 you will see the icon in the Applications menu
 
+### Xbox controller setup
 If running this inside a python virtual environment,
-yu'll need to run "pip install pygame" to get the version of pygame that goes with the version of python in the environ
+you'll need to run this to get the version of pygame that goes with the version of python in the environ
+```
+pip install pygame
+```
 
 Install xboxdrv driver on raspi with  
 ```
 sudo apt-get install xboxdrv
 ```
 
-
-### add this to sudo nano /etc/rc.local and ctrl-o, enter, ctrl-x to save  
+Add this to sudo nano /etc/rc.local and ctrl-o, enter, ctrl-x to save  
 ```
 xboxdrv --daemon --silent &
 ```
@@ -143,7 +150,7 @@ ps aux | grep xboxdrv (to get its pid)
 sudo kill -TERM [put-your-pid-here]
 sudo kill -KILL [put-your-pid-here]
 ```
-
+### Sound setup
 To output sound to the 3mm audio jack  
 ```
 sudo amixer cset numid=3 1
@@ -154,6 +161,7 @@ To output sound to the HDMI audio
 sudo amixer cset numid=3 2
 ```
 
+### Touchscreen monitor setup
 (from https://www.waveshare.com/w/upload/1/19/7inch_HDMI_LCD_%28B%29_User_Manual.pdf):
 To configure 7 inch LCD monitor, run "sudo nano /boot/config.txt" and add this to the bottom:  
 ```
@@ -201,7 +209,8 @@ GPIO 0-8 have pull-ups to 3V3 applied as a default.
 GPIO 9-27 have pull-downs to ground applied as a default.
 This means that GPIO 0-8 will probably be seen as high and GPIO 9-27 will probably be seen as low.
 You want to use GPIO > 8 or else your Arduino will be triggered when you power on the RPi
-because any GPIO < 9 will be set to high until you run R2PY
+because any GPIO < 9 will be set to high until you run R2PY  
+
 but check the schematics for your version of Raspberry Pi
 
 Run this for motor control  
@@ -209,8 +218,8 @@ Run this for motor control
 pip install pysabertooth
 ```
 
-The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1
-The USB Control Sabertooth2x32 dip switches should be (0 is off, 1 is on):  1 0 1 1 1 1
+The Syren10 dip switches should be (0 is off, 1 is on): 0 1 1 1 1 1  
+The USB Control Sabertooth2x32 dip switches should be (0 is off, 1 is on):  1 0 1 1 1 1  
 
 ### Setup pigpio
 If virtual environment, need to copy your pigpio.py and pigpio-1.42.dist-info folder
@@ -226,8 +235,12 @@ sudo systemctl enable pigpiod
 sudo systemctl start pigpiod
 ```
 ### Miscellaneous  
-To remote into raspberry pi
-```sudo apt-get install xrdp```
+To remote into raspberry pi  
+```
+sudo apt-get install xrdp
+```
+
+TODO: callback from Peekaboo thread to turn dome to track person in frame.  
 
 TODO: I was trying to get it to start at system boot with this, but not working maybe because of imshow?  
 ``` 
@@ -239,7 +252,7 @@ and this line
 ```
 
 ## Acknowledgements
-Many thanks for the Sabertooth and Syren hardware configuration adapted from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code adapted from martinohanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup adapted from jrosebr (which I made several modifications).   
+Many thanks for the members of Astromech.net for all they have taught me over the years!  More thanks for the Sabertooth and Syren hardware configuration adapted from Padawan/Padawan360 developed by DanK, DanF, et al., detailed on Astromech.net; the XboxController code adapted from martinohanlon (which I upgraded to Python 3 and made some modifications to how threading and starting/stopping works); the OpenCV and camera setup adapted from jrosebr (which I made several modifications).  If you want to know more about how the face recognition works, you'll want to buy his training course on pyimagesearch.com.   
 
 Unending thanks to everyone who contributed to all the open source libraries used in this project!
 
